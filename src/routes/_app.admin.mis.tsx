@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { exportGeneric } from "@/lib/report-export";
 import { useCurrentUser } from "@/lib/auth";
 import { formatIstDateTime } from "@/lib/format";
+import { useTheme } from "@/hooks/useTheme";
 
 export const Route = createFileRoute("/_app/admin/mis")({ component: MisPage });
 
@@ -20,6 +21,7 @@ function MisPage() {
   const [period, setPeriod] = useState<"Monthly" | "Quarterly" | "Yearly">("Monthly");
   const [exporting, setExporting] = useState<"Excel" | "PDF" | null>(null);
   const user = useCurrentUser();
+  const { theme } = useTheme();
   const { data } = useQuery({ queryKey: ["mis", period], queryFn: () => getMisReport(period) });
 
   async function handleExport(kind: "Excel" | "PDF") {
@@ -119,8 +121,11 @@ function MisPage() {
                 <CardContent>
                   <ResponsiveContainer width="100%" height={280}>
                     <BarChart data={data.byDivision}>
-                      <CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="name" fontSize={12} /><YAxis fontSize={12} />
-                      <Tooltip /><Bar dataKey="count" fill="#00448B" radius={[4,4,0,0]} />
+                      <CartesianGrid strokeDasharray="3 3" stroke={theme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.06)"} />
+                      <XAxis dataKey="name" fontSize={12} stroke={theme === "dark" ? "#94a3b8" : "#475569"} />
+                      <YAxis fontSize={12} stroke={theme === "dark" ? "#94a3b8" : "#475569"} />
+                      <Tooltip contentStyle={{ backgroundColor: theme === "dark" ? "#1e293b" : "#ffffff", borderColor: theme === "dark" ? "#334155" : "#e2e8f0", color: theme === "dark" ? "#f8fafc" : "#0f172a" }} />
+                      <Bar dataKey="count" fill={theme === "dark" ? "#60a5fa" : "#00448B"} radius={[4,4,0,0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </CardContent>

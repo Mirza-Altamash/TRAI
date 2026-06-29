@@ -11,14 +11,22 @@ import { toast } from "sonner";
 import { useState } from "react";
 import { exportGeneric } from "@/lib/report-export";
 import { useAuth } from "@/lib/auth";
+import { useTheme } from "@/hooks/useTheme";
 
 export const Route = createFileRoute("/_app/admin/sla")({ component: SlaPage });
 
 function SlaPage() {
   const { data } = useQuery({ queryKey: ["sla"], queryFn: getSlaMetrics });
   const { session } = useAuth();
+  const { theme } = useTheme();
   const [busy, setBusy] = useState<null | "Excel" | "PDF">(null);
+  
   if (!data) return null;
+
+  const isDark = theme === "dark";
+  const primaryColor = isDark ? "#60a5fa" : "#00448B";
+  const successColor = isDark ? "#34d399" : "#1f7a4d";
+  const gridColor = isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.06)";
 
   const handleExport = async (kind: "Excel" | "PDF") => {
     if (!data.byDivision?.length && !data.byMember?.length) {
@@ -99,8 +107,11 @@ function SlaPage() {
           <CardContent>
             <ResponsiveContainer width="100%" height={260}>
               <BarChart data={data.byDivision}>
-                <CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="name" fontSize={12} /><YAxis domain={[0, 100]} fontSize={12} />
-                <Tooltip /><Bar dataKey="slaPct" fill="#00448B" radius={[4,4,0,0]} />
+                <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
+                <XAxis dataKey="name" fontSize={12} stroke={isDark ? "#94a3b8" : "#475569"} />
+                <YAxis domain={[0, 100]} fontSize={12} stroke={isDark ? "#94a3b8" : "#475569"} />
+                <Tooltip contentStyle={{ backgroundColor: isDark ? "#1e293b" : "#ffffff", borderColor: isDark ? "#334155" : "#e2e8f0", color: isDark ? "#f8fafc" : "#0f172a" }} />
+                <Bar dataKey="slaPct" fill={primaryColor} radius={[4,4,0,0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -110,8 +121,11 @@ function SlaPage() {
           <CardContent>
             <ResponsiveContainer width="100%" height={260}>
               <BarChart data={data.byMember}>
-                <CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="name" fontSize={11} /><YAxis domain={[0, 100]} fontSize={12} />
-                <Tooltip /><Bar dataKey="slaPct" fill="#1f7a4d" radius={[4,4,0,0]} />
+                <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
+                <XAxis dataKey="name" fontSize={11} stroke={isDark ? "#94a3b8" : "#475569"} />
+                <YAxis domain={[0, 100]} fontSize={12} stroke={isDark ? "#94a3b8" : "#475569"} />
+                <Tooltip contentStyle={{ backgroundColor: isDark ? "#1e293b" : "#ffffff", borderColor: isDark ? "#334155" : "#e2e8f0", color: isDark ? "#f8fafc" : "#0f172a" }} />
+                <Bar dataKey="slaPct" fill={successColor} radius={[4,4,0,0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>

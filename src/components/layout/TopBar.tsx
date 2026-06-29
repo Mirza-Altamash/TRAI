@@ -1,4 +1,4 @@
-import { Bell, ChevronDown, LogOut, ShieldCheck, KeyRound } from "lucide-react";
+import { Bell, ChevronDown, LogOut, ShieldCheck, KeyRound, Sun, Moon } from "lucide-react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -11,9 +11,11 @@ import { formatIstDateTime } from "@/lib/format";
 import { useState, useEffect } from "react";
 import { ChangePasswordDialog } from "@/components/common/ChangePasswordDialog";
 import { toast } from "sonner";
+import { useTheme } from "@/hooks/useTheme";
 
 export function TopBar() {
   const { session, signOut } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [cpOpen, setCpOpen] = useState(false);
@@ -64,6 +66,21 @@ export function TopBar() {
       </div>
 
       <div className="flex items-center gap-2">
+        {/* Theme Toggle Button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleTheme}
+          aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
+          className="text-muted-foreground hover:text-foreground hover:bg-accent"
+        >
+          {theme === "light" ? (
+            <Moon className="h-5 w-5" />
+          ) : (
+            <Sun className="h-5 w-5 text-amber-500" />
+          )}
+        </Button>
+
         <DropdownMenu
           onOpenChange={(o) => {
             if (o && unread > 0) {

@@ -8,9 +8,22 @@ import { EmptyState } from "./EmptyState";
 import { formatIstDate } from "@/lib/format";
 import { Eye } from "lucide-react";
 import type { Ticket } from "@/types";
+import { cn } from "@/lib/utils";
 
-export function TicketTable({ rows, showCreatedBy = true, showAssignee = true, markNewAll = false }: {
-  rows: Ticket[]; showCreatedBy?: boolean; showAssignee?: boolean; markNewAll?: boolean;
+export function TicketTable({
+  rows,
+  showCreatedBy = true,
+  showAssignee = true,
+  markNewAll = false,
+  onRowClick,
+  selectedTicketId,
+}: {
+  rows: Ticket[];
+  showCreatedBy?: boolean;
+  showAssignee?: boolean;
+  markNewAll?: boolean;
+  onRowClick?: (ticket: Ticket) => void;
+  selectedTicketId?: string;
 }) {
   if (!rows.length) return <EmptyState title="No tickets" description="Tickets will appear here." />;
   return (
@@ -30,7 +43,14 @@ export function TicketTable({ rows, showCreatedBy = true, showAssignee = true, m
       </TableHeader>
       <TableBody>
         {rows.map(t => (
-          <TableRow key={t.ticketId}>
+          <TableRow
+            key={t.ticketId}
+            className={cn(
+              onRowClick && "cursor-pointer transition-colors",
+              t.ticketId === selectedTicketId && "bg-[#00448B]/10 dark:bg-white/10 hover:bg-[#00448B]/15 dark:hover:bg-white/15 border-l-4 border-l-[#00448B]"
+            )}
+            onClick={() => onRowClick?.(t)}
+          >
             <TableCell className="font-mono text-xs">
               <span className="inline-flex items-center gap-1.5">
                 {t.ticketId}
@@ -47,11 +67,25 @@ export function TicketTable({ rows, showCreatedBy = true, showAssignee = true, m
             <TableCell><StatusBadge status={t.currentStatus} /></TableCell>
             <TableCell className="text-muted-foreground">{formatIstDate(t.createdAt)}</TableCell>
             <TableCell className="text-right">
-              <Button asChild variant="ghost" size="icon">
-                <Link to="/tickets/$ticketId" params={{ ticketId: t.ticketId }}>
+              {onRowClick ? (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRowClick(t);
+                  }}
+                  className={cn(t.ticketId === selectedTicketId && "bg-[#00448B]/10")}
+                >
                   <Eye className="h-4 w-4" />
-                </Link>
-              </Button>
+                </Button>
+              ) : (
+                <Button asChild variant="ghost" size="icon">
+                  <Link to="/tickets/$ticketId" params={{ ticketId: t.ticketId }}>
+                    <Eye className="h-4 w-4" />
+                  </Link>
+                </Button>
+              )}
             </TableCell>
           </TableRow>
         ))}

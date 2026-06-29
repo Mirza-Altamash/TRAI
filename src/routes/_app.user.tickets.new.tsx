@@ -5,7 +5,7 @@ import { z } from "zod";
 import { useState, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "@/components/common/PageHeader";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,7 +15,7 @@ import { createTicket, listMembers } from "@/services/mock";
 import { DIVISIONS, L2_SUBROLES, L3_SUBROLES, PRIORITIES, TICKET_TYPES } from "@/types";
 import { useCurrentUser } from "@/lib/auth";
 import { toast } from "sonner";
-import { Paperclip } from "lucide-react";
+import { Paperclip, FileText } from "lucide-react";
 
 const schema = z.object({
   division: z.string().min(1, "Required"),
@@ -63,12 +63,21 @@ function NewTicket() {
     navigate({ to: "/tickets/$ticketId", params: { ticketId: t.ticketId } });
   };
 
+  const filesArray = selectedFiles ? Array.from(selectedFiles) : [];
+
   return (
     <div className="space-y-6">
       <PageHeader title="Raise a Ticket" subtitle="Submit a new development, modification, or report request." />
-      <Card>
-        <CardContent className="p-6">
-          <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4 md:grid-cols-2">
+      
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        
+        {/* Card 1: Ticket Classification */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Ticket Details</CardTitle>
+            <CardDescription>Specify the division, priority, and ticket type category.</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4 md:grid-cols-3">
             <Field label="Division" error={errors.division?.message}>
               <Select onValueChange={(v) => setValue("division", v)}>
                 <SelectTrigger><SelectValue placeholder="Select division" /></SelectTrigger>
@@ -87,75 +96,123 @@ function NewTicket() {
                 <SelectContent>{TICKET_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
               </Select>
             </Field>
-            <div />
+          </CardContent>
+        </Card>
 
-            {(type === "Modification" || type === "Reports") && (
-              <>
-                <Field label="Portal Name"><Input {...register("portalName")} /></Field>
-                <Field label="Portal URL" error={errors.portalUrl?.message}><Input placeholder="https://" {...register("portalUrl")} /></Field>
-                <Field label="Report Name"><Input {...register("reportName")} /></Field>
-                <div />
-              </>
-            )}
+        {/* Card 2: Portal / Report Information (Conditional) */}
+        {(type === "Modification" || type === "Reports") && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Portal / Report Information</CardTitle>
+              <CardDescription>Enter names and references for the system components being altered.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4 md:grid-cols-3">
+              <Field label="Portal Name"><Input {...register("portalName")} /></Field>
+              <Field label="Portal URL" error={errors.portalUrl?.message}><Input placeholder="https://" {...register("portalUrl")} /></Field>
+              <Field label="Report Name"><Input {...register("reportName")} /></Field>
+            </CardContent>
+          </Card>
+        )}
 
-            <Field label="Summary" error={errors.summary?.message}><Input {...register("summary")} /></Field>
-            <div />
-            <div className="md:col-span-2 space-y-1.5">
+        {/* Card 3: Summary & Description */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Summary & Description</CardTitle>
+            <CardDescription>Explain the problem or feature request clearly.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Field label="Summary" error={errors.summary?.message}>
+              <Input placeholder="Enter a brief summary" {...register("summary")} />
+            </Field>
+            <div className="space-y-1.5">
               <Label>Description</Label>
-              <Textarea rows={5} {...register("description")} />
+              <Textarea rows={5} placeholder="Provide extensive details about your ticket request..." {...register("description")} />
               {errors.description && <p className="text-xs text-destructive">{errors.description.message}</p>}
             </div>
-            <div className="md:col-span-2 space-y-1.5">
-              <Label>Attachments</Label>
-              <div className="flex items-center gap-2 rounded-md border border-dashed border-border p-3 text-sm text-muted-foreground">
-                <Paperclip className="h-4 w-4" />
-                <input 
-                  type="file" 
-                  multiple 
-                  className="text-xs" 
-                  onChange={(e) => setSelectedFiles(e.target.files)} 
-                />
-                {selectedFiles && selectedFiles.length > 0 ? (
-                  <span className="text-xs text-foreground font-medium">({selectedFiles.length} file(s) selected)</span>
-                ) : (
-                  <span>(Files will be uploaded to backend storage.)</span>
-                )}
-              </div>
-            </div>
+          </CardContent>
+        </Card>
 
-            <div className="md:col-span-2 border-t border-border pt-4">
-              <div className="text-sm font-medium mb-3">Assignment</div>
-              <div className="grid gap-4 md:grid-cols-3">
-                <Field label="Level">
-                  <Select value={level} onValueChange={(v) => { setLevel(v as "L2" | "L3"); setValue("level", v as "L2" | "L3"); setSubRole(""); }}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent><SelectItem value="L2">L2</SelectItem><SelectItem value="L3">L3</SelectItem></SelectContent>
-                  </Select>
-                </Field>
-                <Field label="Category" error={errors.subRole?.message}>
-                  <Select value={subRole} onValueChange={(v) => { setSubRole(v); setValue("subRole", v); }}>
-                    <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
-                    <SelectContent>
-                      {(level === "L2" ? L2_SUBROLES : L3_SUBROLES).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </Field>
-                <Field label="Member" error={errors.assignee?.message}>
-                  <Select onValueChange={(v) => setValue("assignee", v)}>
-                    <SelectTrigger><SelectValue placeholder={subRole ? "Select member" : "Pick category first"} /></SelectTrigger>
-                    <SelectContent>{members.map(m => <SelectItem key={m.empId} value={m.empId}>{m.name}</SelectItem>)}</SelectContent>
-                  </Select>
-                </Field>
+        {/* Card 4: Attachments */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Attachments</CardTitle>
+            <CardDescription>Upload supporting screenshots, logs, or documentation.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl p-6 text-center bg-slate-50/50 dark:bg-slate-900/50">
+              <Paperclip className="h-8 w-8 text-muted-foreground mb-2" />
+              <Label htmlFor="file-upload" className="cursor-pointer font-semibold text-primary hover:underline text-sm mb-1">
+                Click to browse files
+              </Label>
+              <span className="text-xs text-muted-foreground mb-4">Supported formats: PDF, DOC, PNG, JPG (Max 5MB per file)</span>
+              <input 
+                id="file-upload"
+                type="file" 
+                multiple 
+                className="hidden" 
+                onChange={(e) => setSelectedFiles(e.target.files)} 
+              />
+            </div>
+            
+            {filesArray.length > 0 && (
+              <div className="space-y-2">
+                <Label className="text-xs font-bold text-muted-foreground uppercase">Selected Files</Label>
+                <div className="flex flex-wrap gap-2">
+                  {filesArray.map((file, i) => (
+                    <div 
+                      key={i} 
+                      className="inline-flex items-center gap-2 rounded-lg bg-primary/5 dark:bg-white/5 border border-primary/20 dark:border-white/10 px-3 py-1.5 text-xs text-foreground font-semibold"
+                    >
+                      <FileText className="h-4 w-4 text-primary dark:text-blue-400" />
+                      <span>{file.name}</span>
+                      <span className="text-[10px] text-muted-foreground font-normal">({Math.round(file.size / 1024)} KB)</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
+          </CardContent>
+        </Card>
 
-            <div className="md:col-span-2 flex justify-end gap-2 pt-2">
-              <Button type="button" variant="outline" onClick={() => navigate({ to: "/user/tickets" })}>Cancel</Button>
-              <Button type="submit" disabled={isSubmitting}>Create ticket</Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+        {/* Card 5: Assignment */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Target Assignment</CardTitle>
+            <CardDescription>Route this ticket to the appropriate support level and member.</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4 md:grid-cols-3">
+            <Field label="Level">
+              <Select value={level} onValueChange={(v) => { setLevel(v as "L2" | "L3"); setValue("level", v as "L2" | "L3"); setSubRole(""); }}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent><SelectItem value="L2">L2</SelectItem><SelectItem value="L3">L3</SelectItem></SelectContent>
+              </Select>
+            </Field>
+            <Field label="Category" error={errors.subRole?.message}>
+              <Select value={subRole} onValueChange={(v) => { setSubRole(v); setValue("subRole", v); }}>
+                <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
+                <SelectContent>
+                  {(level === "L2" ? L2_SUBROLES : L3_SUBROLES).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="Member" error={errors.assignee?.message}>
+              <Select onValueChange={(v) => setValue("assignee", v)}>
+                <SelectTrigger><SelectValue placeholder={subRole ? "Select member" : "Pick category first"} /></SelectTrigger>
+                <SelectContent>{members.map(m => <SelectItem key={m.empId} value={m.empId}>{m.name}</SelectItem>)}</SelectContent>
+              </Select>
+            </Field>
+          </CardContent>
+        </Card>
+
+        {/* Form Controls */}
+        <div className="flex justify-end gap-3 pt-2">
+          <Button type="button" variant="outline" onClick={() => navigate({ to: "/user/tickets" })}>Cancel</Button>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Submitting..." : "Create ticket"}
+          </Button>
+        </div>
+
+      </form>
     </div>
   );
 }

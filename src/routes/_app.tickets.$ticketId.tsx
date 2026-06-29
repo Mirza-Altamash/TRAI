@@ -237,89 +237,115 @@ function TicketDetail() {
     };
 
     if (tabular) {
+      const defaultTab = "comment";
+
       return (
-        <Card className="mt-4">
-          <CardHeader><CardTitle className="text-base">Manage Ticket</CardTitle></CardHeader>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-56">Action</TableHead>
-                  <TableHead>Details</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                <TableRow>
-                  <TableCell className="align-top font-medium">
-                    <div className="flex items-center gap-2"><RefreshCcw className="h-4 w-4" /> Reassign &amp; Comment</div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="grid gap-3 md:grid-cols-3">
-                      <div className="space-y-1.5"><Label>Level</Label>
-                        <Select value={reassignLevel} onValueChange={(v) => { setReassignLevel(v as "L2" | "L3"); setReassignSub(""); setReassignMember(""); }}>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
-                          <SelectContent><SelectItem value="L2">L2</SelectItem><SelectItem value="L3">L3</SelectItem></SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-1.5"><Label>Category</Label>
-                        <Select value={reassignSub} onValueChange={(v) => { setReassignSub(v); setReassignMember(""); }}>
-                          <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                          <SelectContent>{(reassignLevel === "L2" ? L2_SUBROLES : L3_SUBROLES).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-1.5"><Label>Member</Label>
-                        <Select value={reassignMember} onValueChange={setReassignMember}>
-                          <SelectTrigger><SelectValue placeholder={reassignSub ? "Select member" : "Pick category"} /></SelectTrigger>
-                          <SelectContent>{members.map(m => <SelectItem key={m.empId} value={m.empId}>{m.name}</SelectItem>)}</SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    <div className="mt-3 space-y-1.5">
-                      <Label>Comment (optional)</Label>
-                      <Textarea rows={3} placeholder="Add a comment to include with the reassignment…" value={comment} onChange={e => setComment(e.target.value)} />
-                    </div>
-                    <div className="mt-3 flex justify-end">
-                      <Button onClick={onReassign} disabled={!reassignMember}>Reassign{comment.trim() ? " & Comment" : ""}</Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
+        <Card className="mt-4 border border-slate-200 dark:border-slate-800">
+          <CardHeader>
+            <CardTitle className="text-base">Manage Ticket</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <Tabs defaultValue={defaultTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-2 lg:grid-cols-3 max-w-md mb-4 bg-muted/50">
+                <TabsTrigger value="comment" className="text-xs font-semibold">
+                  <MessageSquare className="mr-1.5 h-3.5 w-3.5" /> Comment Only
+                </TabsTrigger>
+                <TabsTrigger value="reassign" className="text-xs font-semibold">
+                  <RefreshCcw className="mr-1.5 h-3.5 w-3.5" /> Reassign
+                </TabsTrigger>
                 {canClose && (
-                  <TableRow>
-                    <TableCell className="align-top font-medium">
-                      <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4" /> Close Ticket</div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="space-y-1.5">
-                        <Label>Closure comment <span className="text-destructive">*</span></Label>
-                        <Textarea rows={3} placeholder="Reason for closing this ticket (required)…" value={closeComment} onChange={e => setCloseComment(e.target.value)} />
-                      </div>
-                      <div className="mt-3 flex items-center justify-between gap-4">
-                        <p className="text-sm text-muted-foreground">Once closed, no further actions can be taken on this ticket.</p>
-                        <Button variant="default" onClick={onClose} disabled={closing || !closeComment.trim()}>
-                          {closing ? "Closing…" : "Close Ticket"}
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
+                  <TabsTrigger value="close" className="text-xs font-semibold">
+                    <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" /> Close Ticket
+                  </TabsTrigger>
                 )}
-                {showCommentOnly && (
-                  <TableRow>
-                    <TableCell className="align-top font-medium">
-                      <div className="flex items-center gap-2"><MessageSquare className="h-4 w-4" /> Comment Only</div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="space-y-1.5">
-                        <Label>Comment</Label>
-                        <Textarea rows={3} placeholder="Add a comment without changing the assignee…" value={onlyComment} onChange={e => setOnlyComment(e.target.value)} />
-                      </div>
-                      <div className="mt-3 flex justify-end">
-                        <Button onClick={onCommentOnly} disabled={!onlyComment.trim()}>Post Comment</Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+              </TabsList>
+
+              {/* Tab 1: Comment Only */}
+              <TabsContent value="comment" className="space-y-4 mt-0">
+                <div className="space-y-1.5">
+                  <Label htmlFor="manage-comment-only">Your Comment</Label>
+                  <Textarea
+                    id="manage-comment-only"
+                    rows={3}
+                    placeholder="Add a comment without changing the assignee…"
+                    value={onlyComment}
+                    onChange={(e) => setOnlyComment(e.target.value)}
+                    className="bg-slate-50/50 dark:bg-slate-900/50"
+                  />
+                </div>
+                <div className="flex justify-end">
+                  <Button onClick={onCommentOnly} disabled={!onlyComment.trim()}>
+                    Post Comment
+                  </Button>
+                </div>
+              </TabsContent>
+
+              {/* Tab 2: Reassign */}
+              <TabsContent value="reassign" className="space-y-4 mt-0">
+                <div className="grid gap-4 md:grid-cols-3">
+                  <div className="space-y-1.5">
+                    <Label>Target Level</Label>
+                    <Select value={reassignLevel} onValueChange={(v) => { setReassignLevel(v as "L2" | "L3"); setReassignSub(""); setReassignMember(""); }}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent><SelectItem value="L2">L2</SelectItem><SelectItem value="L3">L3</SelectItem></SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Category</Label>
+                    <Select value={reassignSub} onValueChange={(v) => { setReassignSub(v); setReassignMember(""); }}>
+                      <SelectTrigger><SelectValue placeholder="Select Category" /></SelectTrigger>
+                      <SelectContent>
+                        {(reassignLevel === "L2" ? L2_SUBROLES : L3_SUBROLES).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Member</Label>
+                    <Select value={reassignMember} onValueChange={setReassignMember}>
+                      <SelectTrigger><SelectValue placeholder={reassignSub ? "Select Member" : "Pick category first"} /></SelectTrigger>
+                      <SelectContent>{members.map(m => <SelectItem key={m.empId} value={m.empId}>{m.name}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Reassignment Comment (optional)</Label>
+                  <Textarea
+                    rows={3}
+                    placeholder="Add a comment to include with the reassignment…"
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    className="bg-slate-50/50 dark:bg-slate-900/50"
+                  />
+                </div>
+                <div className="flex justify-end">
+                  <Button onClick={onReassign} disabled={!reassignMember}>
+                    Reassign{comment.trim() ? " & Comment" : ""}
+                  </Button>
+                </div>
+              </TabsContent>
+
+              {/* Tab 3: Close Ticket */}
+              {canClose && (
+                <TabsContent value="close" className="space-y-4 mt-0">
+                  <div className="space-y-1.5">
+                    <Label>Closure Comment <span className="text-destructive">*</span></Label>
+                    <Textarea
+                      rows={3}
+                      placeholder="Explain the reason for closing this ticket (required)…"
+                      value={closeComment}
+                      onChange={(e) => setCloseComment(e.target.value)}
+                      className="bg-slate-50/50 dark:bg-slate-900/50"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between gap-4 border-t border-slate-100 dark:border-slate-800 pt-3">
+                    <p className="text-xs text-muted-foreground">Once closed, no further actions can be taken on this ticket.</p>
+                    <Button variant="default" onClick={onClose} disabled={closing || !closeComment.trim()}>
+                      {closing ? "Closing…" : "Close Ticket"}
+                    </Button>
+                  </div>
+                </TabsContent>
+              )}
+            </Tabs>
           </CardContent>
         </Card>
       );

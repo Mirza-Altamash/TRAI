@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider } from "@/lib/auth";
 import { Toaster } from "@/components/ui/sonner";
+import { ThemeProvider } from "@/hooks/useTheme";
 
 function NotFoundComponent() {
   return (
@@ -105,6 +106,17 @@ function RootShell({ children }: { children: ReactNode }) {
     <html lang="en">
       <head>
         <HeadContent />
+        {/* Anti-flash theme inline injection script */}
+        <script dangerouslySetInnerHTML={{ __html: `
+          (function() {
+            try {
+              var saved = localStorage.getItem('theme');
+              var theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+              document.documentElement.classList.remove('light', 'dark');
+              document.documentElement.classList.add(theme);
+            } catch (e) {}
+          })();
+        ` }} />
       </head>
       <body>
         {children}
@@ -119,10 +131,12 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <Outlet />
-        <Toaster position="bottom-right" richColors />
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <Outlet />
+          <Toaster position="bottom-right" richColors />
+        </AuthProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

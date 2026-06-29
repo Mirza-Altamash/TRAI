@@ -18,7 +18,10 @@ export function MetricCard({
   } as const;
   return (
     <Card
-      className={cn("transition-shadow hover:shadow-md", onClick && "cursor-pointer hover:border-primary/40")}
+      className={cn(
+        "cursor-default",
+        onClick && "cursor-pointer hover:border-primary/60 dark:hover:border-primary/40 hover:shadow-[6px_6px_0px_0px_rgba(0,68,139,0.2)] dark:hover:shadow-[6px_6px_0px_0px_rgba(255,255,255,0.1)] active:translate-y-0 active:translate-x-0"
+      )}
       onClick={onClick}
     >
       <CardContent className="flex items-center gap-4 py-5">
