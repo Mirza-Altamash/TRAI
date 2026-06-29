@@ -1,0 +1,35 @@
+version: "3.8"
+
+services:
+  mongodb:
+    image: mongo:6.0
+    container_name: trai-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - trai_mongo_data:/data/db
+
+  backend:
+    build:
+      context: ./trai-backend
+      dockerfile: Dockerfile
+    container_name: trai-backend-api
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - NODE_ENV=production
+      - MONGODB_URI=mongodb://mongodb:27017/trai_citizen_hub
+      - JWT_ACCESS_SECRET=trai_production_access_secret_998877!@#
+      - JWT_REFRESH_SECRET=trai_production_refresh_secret_445566$%^
+    depends_on:
+      - mongodb
+    volumes:
+      - trai_uploaded_attachments:/app/uploads
+
+volumes:
+  trai-backend:
+  trai_mongo_data:
+  trai_uploaded_attachments:
