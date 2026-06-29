@@ -106,9 +106,33 @@ function TicketDetail() {
             </div>
             <div>
               <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Attachments</div>
-              {t!.attachments.length === 0
-                ? <p className="text-sm text-muted-foreground">No attachments.</p>
-                : <ul className="text-sm text-foreground">{t!.attachments.map(a => <li key={a.id}>{a.name}</li>)}</ul>}
+              {t!.attachments.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No attachments.</p>
+              ) : (
+                <ul className="text-sm text-foreground space-y-1">
+                  {t!.attachments.map((a) => {
+                    const baseApiUrl = (import.meta.env.VITE_API_URL as string) || "http://localhost:5000/api";
+                    const baseUrl = baseApiUrl.replace(/\/api\/?$/, "");
+                    const downloadUrl = `${baseUrl}/uploads/${a.id}`;
+                    return (
+                      <li key={a.id}>
+                        <a
+                          href={downloadUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-primary hover:underline font-medium"
+                          download={a.name}
+                        >
+                          {a.name}
+                          <span className="text-xs text-muted-foreground font-normal ml-1">
+                            ({a.sizeKb} KB)
+                          </span>
+                        </a>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
             </div>
           </CardContent></Card>
 

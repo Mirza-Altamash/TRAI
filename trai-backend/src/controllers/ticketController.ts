@@ -51,7 +51,7 @@ export async function createTicket(req: AuthenticatedRequest, res: Response) {
     if (req.files && Array.isArray(req.files)) {
       for (const file of req.files) {
         attachments.push({
-          id: crypto.randomUUID(),
+          id: file.filename,
           name: file.originalname,
           sizeKb: Math.round(file.size / 1024),
           uploadedAt: new Date()
