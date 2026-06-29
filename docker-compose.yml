@@ -1,12 +1,8 @@
-version: "3.8"
-
 services:
   mongodb:
     image: mongo:6.0
     container_name: trai-mongodb
     restart: unless-stopped
-    ports:
-      - "27017:27017"
     volumes:
       - trai_mongo_data:/data/db
 
@@ -16,20 +12,40 @@ services:
       dockerfile: Dockerfile
     container_name: trai-backend-api
     restart: unless-stopped
-    ports:
-      - "5000:5000"
     environment:
       - PORT=5000
       - NODE_ENV=production
       - MONGODB_URI=mongodb://mongodb:27017/trai_citizen_hub
-      - JWT_ACCESS_SECRET=trai_production_access_secret_998877!@#
-      - JWT_REFRESH_SECRET=trai_production_refresh_secret_445566$%^
+      - JWT_ACCESS_SECRET=0c897f26d246603a1154c1ea102377b8e1f5799aa568472f8832a76f2d24268e
+      - JWT_REFRESH_SECRET=b63c7b2c01997fa44dbdfa8684d2847c23a7e48b30e0a5e8de9d5f7f2b1d033e
     depends_on:
       - mongodb
     volumes:
       - trai_uploaded_attachments:/app/uploads
 
+  frontend:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    container_name: trai-frontend-app
+    restart: unless-stopped
+    environment:
+      - VITE_API_URL=/api
+    depends_on:
+      - backend
+
+  nginx:
+    image: nginx:alpine
+    container_name: trai-nginx-proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - frontend
+      - backend
+
 volumes:
-  trai-backend:
   trai_mongo_data:
   trai_uploaded_attachments:
