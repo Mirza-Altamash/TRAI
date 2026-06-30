@@ -6,9 +6,10 @@ import {
   addComment,
   reassignTicket,
   updateStatus,
-  listAssigneeTicketsSplit
+  listAssigneeTicketsSplit,
+  deleteTicket
 } from "../controllers/ticketController";
-import { authenticateToken } from "../middleware/authMiddleware";
+import { authenticateToken, requireRole } from "../middleware/authMiddleware";
 import { upload } from "../middleware/uploadMiddleware";
 
 const router = Router();
@@ -21,5 +22,6 @@ router.post("/", authenticateToken, upload.array("attachments"), createTicket);
 router.post("/:ticketId/comments", authenticateToken, addComment);
 router.post("/:ticketId/reassign", authenticateToken, reassignTicket);
 router.put("/:ticketId/status", authenticateToken, updateStatus);
+router.delete("/:ticketId", authenticateToken, requireRole(["ADMIN", "L3"]), deleteTicket);
 
 export default router;

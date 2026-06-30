@@ -220,3 +220,22 @@ export async function changePassword(req: AuthenticatedRequest, res: Response) {
     return res.status(500).json({ message: error.message || "Internal server error" });
   }
 }
+
+export async function getMe(req: AuthenticatedRequest, res: Response) {
+  try {
+    const empId = req.user?.empId;
+    if (!empId) {
+      return res.status(401).json({ message: "Unauthorized: Missing employee identity" });
+    }
+    const employee = await Employee.findOne({ empId });
+    if (!employee || !employee.isActive) {
+      return res.status(401).json({ message: "Unauthorized: User not found or inactive" });
+    }
+    const userObj = employee.toObject();
+    delete (userObj as any).passwordHash;
+    return res.json({ user: userObj });
+  } catch (error: any) {
+    console.error("Get me error:", error);
+    return res.status(500).json({ message: error.message || "Internal server error" });
+  }
+}

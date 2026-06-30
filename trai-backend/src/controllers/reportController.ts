@@ -10,7 +10,7 @@ export async function getAdminMetrics(req: AuthenticatedRequest, res: Response) 
     const open = await Ticket.countDocuments({ currentStatus: "Open" });
     const resolved = await Ticket.countDocuments({ currentStatus: "Resolved" });
     const closed = await Ticket.countDocuments({ currentStatus: "Closed" });
-    const assigned = await Ticket.countDocuments({ currentStatus: { $ne: "Open" } });
+    const assigned = await Ticket.countDocuments({ currentStatus: "Open", currentAssigneeRole: { $in: ["L2", "L3"] } });
     const employeesCount = await Employee.countDocuments({});
 
     return res.json({

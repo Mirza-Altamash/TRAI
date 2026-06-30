@@ -21,7 +21,7 @@ export interface ITicket extends Document {
   currentAssignee: string; // empId
   currentAssigneeName: string;
   currentAssigneeRole: "ADMIN" | "USER" | "L2" | "L3";
-  currentStatus: "Open" | "Assigned" | "Resolved" | "Closed";
+  currentStatus: "Open" | "Resolved" | "Closed";
   createdBy: string; // empId
   createdByName: string;
   assignedAt?: Date;
@@ -54,7 +54,7 @@ const TicketSchema = new Schema<ITicket>(
     currentAssignee: { type: String, required: true, index: true },
     currentAssigneeName: { type: String, required: true },
     currentAssigneeRole: { type: String, required: true, enum: ["ADMIN", "USER", "L2", "L3"] },
-    currentStatus: { type: String, required: true, enum: ["Open", "Assigned", "Resolved", "Closed"], default: "Open" },
+    currentStatus: { type: String, required: true, enum: ["Open", "Resolved", "Closed"], default: "Open" },
     createdBy: { type: String, required: true, index: true },
     createdByName: { type: String, required: true },
     assignedAt: { type: Date },

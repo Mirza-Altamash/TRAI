@@ -25,6 +25,7 @@ import { Route as AppAdminTotalticketRouteImport } from './routes/_app.admin.tot
 import { Route as AppAdminSlaRouteImport } from './routes/_app.admin.sla'
 import { Route as AppAdminReportsRouteImport } from './routes/_app.admin.reports'
 import { Route as AppAdminMisRouteImport } from './routes/_app.admin.mis'
+import { Route as AppAdminL3TicketsRouteImport } from './routes/_app.admin.l3-tickets'
 import { Route as AppAdminDashboardRouteImport } from './routes/_app.admin.dashboard'
 import { Route as AppAdminAuditRouteImport } from './routes/_app.admin.audit'
 import { Route as AppAdminAnalyticsRouteImport } from './routes/_app.admin.analytics'
@@ -113,6 +114,11 @@ const AppAdminMisRoute = AppAdminMisRouteImport.update({
   path: '/admin/mis',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAdminL3TicketsRoute = AppAdminL3TicketsRouteImport.update({
+  id: '/admin/l3-tickets',
+  path: '/admin/l3-tickets',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAdminDashboardRoute = AppAdminDashboardRouteImport.update({
   id: '/admin/dashboard',
   path: '/admin/dashboard',
@@ -161,6 +167,7 @@ export interface FileRoutesByFullPath {
   '/admin/analytics': typeof AppAdminAnalyticsRoute
   '/admin/audit': typeof AppAdminAuditRoute
   '/admin/dashboard': typeof AppAdminDashboardRoute
+  '/admin/l3-tickets': typeof AppAdminL3TicketsRoute
   '/admin/mis': typeof AppAdminMisRoute
   '/admin/reports': typeof AppAdminReportsRoute
   '/admin/sla': typeof AppAdminSlaRoute
@@ -186,6 +193,7 @@ export interface FileRoutesByTo {
   '/admin/analytics': typeof AppAdminAnalyticsRoute
   '/admin/audit': typeof AppAdminAuditRoute
   '/admin/dashboard': typeof AppAdminDashboardRoute
+  '/admin/l3-tickets': typeof AppAdminL3TicketsRoute
   '/admin/mis': typeof AppAdminMisRoute
   '/admin/reports': typeof AppAdminReportsRoute
   '/admin/sla': typeof AppAdminSlaRoute
@@ -213,6 +221,7 @@ export interface FileRoutesById {
   '/_app/admin/analytics': typeof AppAdminAnalyticsRoute
   '/_app/admin/audit': typeof AppAdminAuditRoute
   '/_app/admin/dashboard': typeof AppAdminDashboardRoute
+  '/_app/admin/l3-tickets': typeof AppAdminL3TicketsRoute
   '/_app/admin/mis': typeof AppAdminMisRoute
   '/_app/admin/reports': typeof AppAdminReportsRoute
   '/_app/admin/sla': typeof AppAdminSlaRoute
@@ -240,6 +249,7 @@ export interface FileRouteTypes {
     | '/admin/analytics'
     | '/admin/audit'
     | '/admin/dashboard'
+    | '/admin/l3-tickets'
     | '/admin/mis'
     | '/admin/reports'
     | '/admin/sla'
@@ -265,6 +275,7 @@ export interface FileRouteTypes {
     | '/admin/analytics'
     | '/admin/audit'
     | '/admin/dashboard'
+    | '/admin/l3-tickets'
     | '/admin/mis'
     | '/admin/reports'
     | '/admin/sla'
@@ -291,6 +302,7 @@ export interface FileRouteTypes {
     | '/_app/admin/analytics'
     | '/_app/admin/audit'
     | '/_app/admin/dashboard'
+    | '/_app/admin/l3-tickets'
     | '/_app/admin/mis'
     | '/_app/admin/reports'
     | '/_app/admin/sla'
@@ -431,6 +443,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminMisRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/admin/l3-tickets': {
+      id: '/_app/admin/l3-tickets'
+      path: '/admin/l3-tickets'
+      fullPath: '/admin/l3-tickets'
+      preLoaderRoute: typeof AppAdminL3TicketsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/admin/dashboard': {
       id: '/_app/admin/dashboard'
       path: '/admin/dashboard'
@@ -494,6 +513,7 @@ interface AppRouteChildren {
   AppAdminAnalyticsRoute: typeof AppAdminAnalyticsRoute
   AppAdminAuditRoute: typeof AppAdminAuditRoute
   AppAdminDashboardRoute: typeof AppAdminDashboardRoute
+  AppAdminL3TicketsRoute: typeof AppAdminL3TicketsRoute
   AppAdminMisRoute: typeof AppAdminMisRoute
   AppAdminReportsRoute: typeof AppAdminReportsRoute
   AppAdminSlaRoute: typeof AppAdminSlaRoute
@@ -518,6 +538,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAdminAnalyticsRoute: AppAdminAnalyticsRoute,
   AppAdminAuditRoute: AppAdminAuditRoute,
   AppAdminDashboardRoute: AppAdminDashboardRoute,
+  AppAdminL3TicketsRoute: AppAdminL3TicketsRoute,
   AppAdminMisRoute: AppAdminMisRoute,
   AppAdminReportsRoute: AppAdminReportsRoute,
   AppAdminSlaRoute: AppAdminSlaRoute,

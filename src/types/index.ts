@@ -6,7 +6,7 @@ export type SubRole = L2SubRole | L3SubRole | null;
 export type Division = "IT" | "NSL" | "QoS" | "B&CS" | "F&EA";
 export type Priority = "Normal" | "Medium" | "High";
 export type TicketType = "New Development" | "Modification" | "Reports";
-export type TicketStatus = "Open" | "Assigned" | "Resolved" | "Closed";
+export type TicketStatus = "Open" | "Resolved" | "Closed";
 
 export interface Employee {
   empId: string;
@@ -53,15 +53,7 @@ export interface Ticket {
   autoCloseEligible?: boolean;
 }
 
-export type TrailAction =
-  | "Ticket Created"
-  | "Assignment"
-  | "Reassignment"
-  | "Comment"
-  | "Status Change"
-  | "Resolve"
-  | "Close"
-  | "Export";
+export type TrailAction = string;
 
 export interface TrailLog {
   id: string;
@@ -96,6 +88,7 @@ export type AuditAction =
   | "Employee Update"
   | "Employee Delete"
   | "Ticket Create"
+  | "Ticket Delete"
   | "Assignment"
   | "Reassignment"
   | "Comment"
@@ -124,6 +117,6 @@ export interface Paginated<T> {
 export const DIVISIONS: Division[] = ["IT", "NSL", "QoS", "B&CS", "F&EA"];
 export const PRIORITIES: Priority[] = ["Normal", "Medium", "High"];
 export const TICKET_TYPES: TicketType[] = ["New Development", "Modification", "Reports"];
-export const STATUSES: TicketStatus[] = ["Open", "Assigned", "Resolved", "Closed"];
+export const STATUSES: TicketStatus[] = ["Open", "Resolved", "Closed"];
 export const L2_SUBROLES: L2SubRole[] = ["Developer", "Infra", "Network"];
 export const L3_SUBROLES: L3SubRole[] = ["SRO", "J.Adv", "D.Adv", "Adv"];

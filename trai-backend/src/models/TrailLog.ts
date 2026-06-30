@@ -4,15 +4,15 @@ import { IAttachment } from "./Ticket";
 export interface ITrailLog extends Document {
   id: string; // matches uuid generated/expected by front-end
   ticketId: string;
-  action: "Ticket Created" | "Assignment" | "Reassignment" | "Comment" | "Status Change" | "Resolve" | "Close" | "Export";
+  action: string;
   comment?: string;
   performedBy: string; // empId
   performedByName: string;
   performerRole: "ADMIN" | "USER" | "L2" | "L3";
   fromAssignee?: string;
   toAssignee?: string;
-  previousStatus?: "Open" | "Assigned" | "Resolved" | "Closed";
-  currentStatus?: "Open" | "Assigned" | "Resolved" | "Closed";
+  previousStatus?: "Open" | "Resolved" | "Closed";
+  currentStatus?: "Open" | "Resolved" | "Closed";
   attachment?: IAttachment;
   createdAt: Date;
 }
@@ -22,8 +22,7 @@ const TrailLogSchema = new Schema<ITrailLog>({
   ticketId: { type: String, required: true, index: true },
   action: {
     type: String,
-    required: true,
-    enum: ["Ticket Created", "Assignment", "Reassignment", "Comment", "Status Change", "Resolve", "Close", "Export"]
+    required: true
   },
   comment: { type: String },
   performedBy: { type: String, required: true },
@@ -31,8 +30,8 @@ const TrailLogSchema = new Schema<ITrailLog>({
   performerRole: { type: String, required: true, enum: ["ADMIN", "USER", "L2", "L3"] },
   fromAssignee: { type: String },
   toAssignee: { type: String },
-  previousStatus: { type: String, enum: ["Open", "Assigned", "Resolved", "Closed"] },
-  currentStatus: { type: String, enum: ["Open", "Assigned", "Resolved", "Closed"] },
+  previousStatus: { type: String, enum: ["Open", "Resolved", "Closed"] },
+  currentStatus: { type: String, enum: ["Open", "Resolved", "Closed"] },
   attachment: {
     id: String,
     name: String,

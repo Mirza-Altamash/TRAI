@@ -40,11 +40,24 @@ const NAV: Record<Role, NavItem[]> = {
 
 export function Sidebar({ role }: { role: Role }) {
   const pathname = useRouterState({ select: s => s.location.pathname });
-  const items = NAV[role];
+  
+  let items = NAV[role];
+  if (role === "L3") {
+    const adminItems = NAV.ADMIN.filter(item => item.to !== "/admin/sla");
+    items = [
+      ...adminItems,
+      { to: "/admin/l3-tickets", label: "My L3 Tickets", icon: ListChecks }
+    ];
+  } else if (role === "ADMIN") {
+    items = NAV.ADMIN.filter(item => item.to !== "/admin/sla");
+  }
+
+  const portalLabel = role === "L3" ? "L3 Admin" : role;
+
   return (
     <aside className="hidden w-60 shrink-0 flex-col gap-1 border-r border-sidebar-border bg-sidebar px-3 py-4 text-sidebar-foreground lg:flex">
       <div className="mb-3 flex items-center gap-2 px-2 text-xs uppercase tracking-wider text-sidebar-foreground/70">
-        <ShieldCheck className="h-3.5 w-3.5" /> {role} Portal
+        <ShieldCheck className="h-3.5 w-3.5" /> {portalLabel} Portal
       </div>
       <nav className="flex flex-col gap-0.5">
         {items.map(item => {

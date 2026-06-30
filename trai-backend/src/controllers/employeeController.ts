@@ -78,8 +78,9 @@ export async function createEmployee(req: AuthenticatedRequest, res: Response) {
       return res.status(400).json({ message: "Employee ID or Email already exists" });
     }
 
-    // Hash default password for new accounts
-    const passwordHash = await hashPassword("Password123");
+    // Hash password for new accounts (use custom if provided, otherwise default to Password123)
+    const { password } = req.body;
+    const passwordHash = await hashPassword(password || "Password123");
 
     const newEmp = await Employee.create({
       empId: empId.toUpperCase(),

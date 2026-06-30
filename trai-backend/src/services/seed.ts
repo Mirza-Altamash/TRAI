@@ -18,7 +18,7 @@ function iso(daysAgo: number, hour = 10): Date {
 const DIVISIONS = ["IT", "NSL", "QoS", "B&CS", "F&EA"] as const;
 const PRIORITIES = ["Normal", "Medium", "High"] as const;
 const TICKET_TYPES = ["New Development", "Modification", "Reports"] as const;
-const STATUSES = ["Open", "Assigned", "Resolved", "Closed"] as const;
+const STATUSES = ["Open", "Resolved", "Closed"] as const;
 
 export async function seedDatabase() {
   console.log("Seeding database...");
@@ -128,20 +128,21 @@ export async function seedDatabase() {
       currentAssignee: assignee.empId,
       currentAssigneeName: assignee.name,
       currentAssigneeRole: assignee.role,
-      currentStatus: status === "Open" ? "Assigned" : status,
+      currentStatus: status,
       createdBy: createdBy.empId,
       createdByName: createdBy.name,
       createdAt,
       assignedAt: createdAt,
-      resolvedAt: status === "Closed" ? iso(Math.max(0, daysAgo - 5)) : undefined,
+      resolvedAt: status !== "Open" ? iso(Math.max(0, daysAgo - 5)) : undefined,
       closedAt,
       autoCloseEligible: status === "Closed" ? false : true
     });
 
+    const roleString = assignee.subRole ? ` (${assignee.role} ${assignee.subRole})` : ` (${assignee.role})`;
     await TrailLog.create({
       id: crypto.randomUUID(),
       ticketId,
-      action: "Ticket Created",
+      action: `Ticket Created and Assigned to ${assignee.name}${roleString}`,
       comment: summary,
       performedBy: createdBy.empId,
       performedByName: createdBy.name,
@@ -150,29 +151,44 @@ export async function seedDatabase() {
       createdAt
     });
 
-    await TrailLog.create({
-      id: crypto.randomUUID(),
-      ticketId,
-      action: "Assignment",
-      comment: `Assigned to ${assignee.name}`,
-      performedBy: "TRAI-ADM-001",
-      performedByName: "System",
-      performerRole: "ADMIN",
-      toAssignee: assignee.empId,
-      currentStatus: "Assigned",
-      createdAt
-    });
-
-    if (status === "Closed") {
+    if (status === "Resolved") {
+      const resolvedAt = iso(Math.max(0, daysAgo - 5));
       await TrailLog.create({
         id: crypto.randomUUID(),
         ticketId,
-        action: "Close",
-        comment: "Working as expected",
+        action: `Ticket Resolved and Assigned to ${createdBy.name}`,
+        comment: "Problem resolved successfully and ready for verification",
         performedBy: assignee.empId,
         performedByName: assignee.name,
         performerRole: assignee.role,
-        previousStatus: "Assigned",
+        currentStatus: "Resolved",
+        createdAt: resolvedAt
+      });
+    }
+
+    if (status === "Closed") {
+      const resolvedAt = iso(Math.max(0, daysAgo - 5));
+      await TrailLog.create({
+        id: crypto.randomUUID(),
+        ticketId,
+        action: `Ticket Resolved and Assigned to ${createdBy.name}`,
+        comment: "Problem resolved successfully and ready for verification",
+        performedBy: assignee.empId,
+        performedByName: assignee.name,
+        performerRole: assignee.role,
+        currentStatus: "Resolved",
+        createdAt: resolvedAt
+      });
+
+      await TrailLog.create({
+        id: crypto.randomUUID(),
+        ticketId,
+        action: "Ticket Closed by User",
+        comment: "Working as expected",
+        performedBy: createdBy.empId,
+        performedByName: createdBy.name,
+        performerRole: createdBy.role,
+        previousStatus: "Resolved",
         currentStatus: "Closed",
         createdAt: closedAt
       });

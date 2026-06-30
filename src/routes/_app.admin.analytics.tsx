@@ -37,7 +37,7 @@ function AnalyticsPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <ChartCard title="Tickets by Division">
+        <ChartCard title="Tickets by Division" totals={a.byDivision}>
           <ResponsiveContainer width="100%" height={260}>
             <BarChart data={a.byDivision}>
               <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
@@ -49,7 +49,7 @@ function AnalyticsPage() {
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard title="Priority Distribution">
+        <ChartCard title="Priority Distribution" totals={a.byPriority}>
           <ResponsiveContainer width="100%" height={260}>
             <PieChart>
               <Pie data={a.byPriority} dataKey="count" nameKey="name" outerRadius={90} label>
@@ -61,7 +61,7 @@ function AnalyticsPage() {
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard title="Status Breakdown">
+        <ChartCard title="Status Breakdown" totals={a.byStatus}>
           <ResponsiveContainer width="100%" height={260}>
             <BarChart data={a.byStatus}>
               <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
@@ -87,7 +87,7 @@ function AnalyticsPage() {
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard title="L2 Workload">
+        <ChartCard title="L2 Workload" totals={a.l2workload}>
           <ResponsiveContainer width="100%" height={260}>
             <BarChart data={a.l2workload}>
               <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
@@ -99,7 +99,7 @@ function AnalyticsPage() {
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard title="L3 Workload">
+        <ChartCard title="L3 Workload" totals={a.l3workload}>
           <ResponsiveContainer width="100%" height={260}>
             <BarChart data={a.l3workload}>
               <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
@@ -115,11 +115,30 @@ function AnalyticsPage() {
   );
 }
 
-function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
+function ChartCard({
+  title,
+  children,
+  totals,
+}: {
+  title: string;
+  children: React.ReactNode;
+  totals?: { name: string; count: number }[];
+}) {
   return (
     <Card>
       <CardHeader><CardTitle className="text-base">{title}</CardTitle></CardHeader>
-      <CardContent>{children}</CardContent>
+      <CardContent className="space-y-4">
+        {children}
+        {totals && totals.length > 0 && (
+          <div className="flex flex-wrap gap-2 pt-3 border-t border-border/60 justify-center">
+            {totals.map(t => (
+              <span key={t.name} className="inline-flex items-center gap-1 rounded-full bg-secondary/15 border border-secondary/30 px-2.5 py-0.5 text-xs font-medium text-foreground">
+                <span className="font-semibold text-muted-foreground mr-1">{t.name}:</span> {t.count}
+              </span>
+            ))}
+          </div>
+        )}
+      </CardContent>
     </Card>
   );
 }

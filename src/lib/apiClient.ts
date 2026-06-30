@@ -11,7 +11,7 @@ export const apiClient = axios.create({
 apiClient.interceptors.request.use(
   (config) => {
     try {
-      const sessionRaw = localStorage.getItem("trai.auth.session");
+      const sessionRaw = sessionStorage.getItem("trai.auth.session");
       if (sessionRaw) {
         const session = JSON.parse(sessionRaw) as AuthSession;
         if (session.accessToken) {
@@ -63,7 +63,7 @@ apiClient.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const sessionRaw = localStorage.getItem("trai.auth.session");
+        const sessionRaw = sessionStorage.getItem("trai.auth.session");
         if (!sessionRaw) throw new Error("No active session found");
         const session = JSON.parse(sessionRaw) as AuthSession;
 
@@ -78,7 +78,7 @@ apiClient.interceptors.response.use(
           accessToken,
           refreshToken: newRefreshToken,
         };
-        localStorage.setItem("trai.auth.session", JSON.stringify(updatedSession));
+        sessionStorage.setItem("trai.auth.session", JSON.stringify(updatedSession));
 
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         processQueue(null, accessToken);
@@ -90,7 +90,7 @@ apiClient.interceptors.response.use(
         isRefreshing = false;
 
         // Invalidate session on failure and redirect to login
-        localStorage.removeItem("trai.auth.session");
+        sessionStorage.removeItem("trai.auth.session");
         if (typeof window !== "undefined") {
           window.location.href = "/login";
         }

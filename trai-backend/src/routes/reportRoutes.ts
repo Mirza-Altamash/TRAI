@@ -22,7 +22,7 @@ router.get("/analytics/charts", authenticateToken, getChartsAnalytics);
 router.get("/sla/metrics", authenticateToken, getSlaMetrics);
 router.get("/mis/report", authenticateToken, getMisReport);
 
-// Audit logs (Admin only)
-router.get("/audit", authenticateToken, requireRole(["ADMIN"]), listAuditLogs);
+// Audit logs (Admin/L3)
+router.get("/audit", authenticateToken, requireRole(["ADMIN", "L3"]), listAuditLogs);
 
 export default router;

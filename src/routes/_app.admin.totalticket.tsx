@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_app/admin/totalticket")({ component: AdminTotalTickets });
 
-const STATUS_OPTIONS: TicketStatus[] = ["Open", "Assigned", "Closed"];
+const STATUS_OPTIONS: TicketStatus[] = ["Open", "Resolved", "Closed"];
 
 function AdminTotalTickets() {
   const [search, setSearch] = useState("");

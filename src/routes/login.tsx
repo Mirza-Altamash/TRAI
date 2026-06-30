@@ -33,7 +33,11 @@ function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const { setSession } = useAuth();
   const navigate = useNavigate();
-  const { register, handleSubmit, formState: { errors } } = useForm<FormVals>({ resolver: zodResolver(schema) });
+  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<FormVals>({
+    resolver: zodResolver(schema),
+    defaultValues: { identifier: "", password: "" }
+  });
+  const identifierVal = watch("identifier") || "";
 
   const onSubmit = async (vals: FormVals) => {
     setLoading(true); setError(null);
@@ -173,16 +177,16 @@ function LoginPage() {
               <div className="space-y-1.5">
                 <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Identity Mode</Label>
                 <RadioGroup value={mode} onValueChange={(v) => setMode(v as "empId" | "email")} className="grid grid-cols-2 gap-2">
-                  <Label className={`flex cursor-pointer items-center justify-center gap-2 rounded-lg border p-2.5 text-xs font-semibold tracking-wide transition-all ${mode === "empId" ? "border-[#00448B] bg-blue-50/50 text-[#00448B]" : "border-slate-200 bg-white hover:bg-slate-50 text-slate-600"}`}>
-                    <RadioGroupItem value="empId" className="sr-only" />
+                  <div className={`flex cursor-pointer items-center justify-center gap-2 rounded-lg border p-2.5 text-xs font-semibold tracking-wide transition-all ${mode === "empId" ? "border-[#00448B] bg-blue-50/50 text-[#00448B]" : "border-slate-200 bg-white hover:bg-slate-50 text-slate-600"}`}>
+                    <RadioGroupItem id="mode-empId" value="empId" className="sr-only" />
                     <span className={`h-2 w-2 rounded-full ${mode === "empId" ? "bg-[#00448B]" : "bg-slate-300"}`} />
-                    Employee ID
-                  </Label>
-                  <Label className={`flex cursor-pointer items-center justify-center gap-2 rounded-lg border p-2.5 text-xs font-semibold tracking-wide transition-all ${mode === "email" ? "border-[#00448B] bg-blue-50/50 text-[#00448B]" : "border-slate-200 bg-white hover:bg-slate-50 text-slate-600"}`}>
-                    <RadioGroupItem value="email" className="sr-only" />
+                    <Label htmlFor="mode-empId" className="cursor-pointer">Employee ID</Label>
+                  </div>
+                  <div className={`flex cursor-pointer items-center justify-center gap-2 rounded-lg border p-2.5 text-xs font-semibold tracking-wide transition-all ${mode === "email" ? "border-[#00448B] bg-blue-50/50 text-[#00448B]" : "border-slate-200 bg-white hover:bg-slate-50 text-slate-600"}`}>
+                    <RadioGroupItem id="mode-email" value="email" className="sr-only" />
                     <span className={`h-2 w-2 rounded-full ${mode === "email" ? "bg-[#00448B]" : "bg-slate-300"}`} />
-                    Email Address
-                  </Label>
+                    <Label htmlFor="mode-email" className="cursor-pointer">Email Address</Label>
+                  </div>
                 </RadioGroup>
               </div>
 
@@ -197,6 +201,8 @@ function LoginPage() {
                   autoComplete="username"
                   className="bg-slate-50 border-slate-200 focus:bg-white transition-colors h-10 text-sm"
                   {...register("identifier")}
+                  value={identifierVal}
+                  onChange={(e) => setValue("identifier", e.target.value, { shouldValidate: true })}
                 />
                 {errors.identifier && <p className="text-xs text-rose-500 font-semibold">{errors.identifier.message}</p>}
               </div>

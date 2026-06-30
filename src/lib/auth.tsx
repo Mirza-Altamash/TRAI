@@ -23,7 +23,7 @@ let cached: AuthSession | null = null;
 function readStorage(): AuthSession | null {
   if (typeof window === "undefined") return null;
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
+    const raw = window.sessionStorage.getItem(STORAGE_KEY);
     return raw ? (JSON.parse(raw) as AuthSession) : null;
   } catch {
     return null;
@@ -39,8 +39,8 @@ export function getCurrentSession(): AuthSession | null {
 export function setCurrentSession(s: AuthSession | null) {
   cached = s;
   if (typeof window === "undefined") return;
-  if (s) window.localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
-  else window.localStorage.removeItem(STORAGE_KEY);
+  if (s) window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+  else window.sessionStorage.removeItem(STORAGE_KEY);
 }
 
 export function dashboardPathFor(role: Role): string {
@@ -48,7 +48,7 @@ export function dashboardPathFor(role: Role): string {
     case "ADMIN": return "/admin/dashboard";
     case "USER": return "/user/dashboard";
     case "L2": return "/l2/dashboard";
-    case "L3": return "/l3/dashboard";
+    case "L3": return "/admin/dashboard";
   }
 }
 
@@ -67,6 +67,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     }
   }, [session]);
+
+  useEffect(() => {
+    const handleFocus = async () => {
+      const current = getCurrentSession();
+      if (!current || !current.accessToken) return;
+
+      try {
+        const { apiClient } = await import("./apiClient");
+        const res = await apiClient.get<{ user: Employee }>("/auth/me");
+        setSessionState((prev) => (prev ? { ...prev, user: res.data.user } : null));
+      } catch (err) {
+        console.error("Focus revalidation failed, logging out:", err);
+        setCurrentSession(null);
+        setSessionState(null);
+        if (typeof window !== "undefined") {
+          window.location.href = "/login";
+        }
+      }
+    };
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("focus", handleFocus);
+    }
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("focus", handleFocus);
+      }
+    };
+  }, []);
 
   const value: AuthContextValue = {
     session,

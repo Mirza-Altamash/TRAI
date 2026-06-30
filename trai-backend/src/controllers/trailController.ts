@@ -21,7 +21,22 @@ export async function getTrailLogs(req: AuthenticatedRequest, res: Response) {
     }
 
     if (role) query.performerRole = role;
-    if (action) query.action = action;
+    if (action) {
+      if (action === "Ticket Created") {
+        query.action = { $regex: /Ticket Created/i };
+      } else if (action === "Assignment") {
+        // Match both 'Assigned' and 'Assignment' but avoid matching 'Reassigned'
+        query.action = { $regex: /Assigned/i, $not: /Reassigned/i };
+      } else if (action === "Reassignment") {
+        query.action = { $regex: /Reassigned/i };
+      } else if (action === "Resolve") {
+        query.action = { $regex: /Resolve|Resolved/i };
+      } else if (action === "Close") {
+        query.action = { $regex: /Close|Closed/i };
+      } else {
+        query.action = action;
+      }
+    }
 
     const sortOrder = sortDir === "asc" ? 1 : -1;
 

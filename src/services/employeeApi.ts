@@ -21,7 +21,7 @@ export async function getEmployee(empId: string): Promise<Employee> {
   return res.data;
 }
 
-export async function createEmployee(input: Omit<Employee, "createdAt" | "updatedAt">): Promise<Employee> {
+export async function createEmployee(input: Omit<Employee, "createdAt" | "updatedAt"> & { password?: string }): Promise<Employee> {
   const res = await apiClient.post<Employee>("/employees", input);
   return res.data;
 }

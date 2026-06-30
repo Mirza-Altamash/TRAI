@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "@/components/common/PageHeader";
 import { MetricCard } from "@/components/common/MetricCard";
@@ -13,7 +13,12 @@ import { exportGeneric } from "@/lib/report-export";
 import { useAuth } from "@/lib/auth";
 import { useTheme } from "@/hooks/useTheme";
 
-export const Route = createFileRoute("/_app/admin/sla")({ component: SlaPage });
+export const Route = createFileRoute("/_app/admin/sla")({
+  beforeLoad: () => {
+    throw redirect({ to: "/admin/dashboard" });
+  },
+  component: SlaPage
+});
 
 function SlaPage() {
   const { data } = useQuery({ queryKey: ["sla"], queryFn: getSlaMetrics });

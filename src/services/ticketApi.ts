@@ -64,8 +64,8 @@ export async function addComment(ticketId: string, comment: string): Promise<any
   return res.data;
 }
 
-export async function reassignTicket(ticketId: string, toEmpId: string): Promise<Ticket> {
-  const res = await apiClient.post<Ticket>(`/tickets/${ticketId}/reassign`, { toEmpId });
+export async function reassignTicket(ticketId: string, toEmpId: string, comment: string): Promise<Ticket> {
+  const res = await apiClient.post<Ticket>(`/tickets/${ticketId}/reassign`, { toEmpId, comment });
   return res.data;
 }
 
@@ -89,4 +89,8 @@ export async function listAssigneeTicketsSplit(
     params: { empId, kind, ...opts },
   });
   return res.data;
+}
+
+export async function deleteTicket(ticketId: string): Promise<void> {
+  await apiClient.delete(`/tickets/${ticketId}`);
 }

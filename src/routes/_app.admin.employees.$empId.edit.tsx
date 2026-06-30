@@ -18,13 +18,13 @@ import { toast } from "sonner";
 const schema = z.object({
   name: z.string().min(2, "Required"),
   email: z.string().email("Invalid email"),
-  role: z.enum(["USER", "L2", "L3"]),
+  role: z.enum(["USER", "L2", "L3", "ADMIN"]),
   subRole: z.string().optional(),
   division: z.string().min(1, "Required"),
   designation: z.string().min(1, "Required"),
   floor: z.string().min(1, "Required"),
   isActive: z.boolean(),
-}).refine(d => d.role === "USER" || !!d.subRole, { path: ["subRole"], message: "Required for L2/L3" });
+}).refine(d => d.role === "USER" || d.role === "ADMIN" || !!d.subRole, { path: ["subRole"], message: "Required for L2/L3" });
 
 type FormVals = z.infer<typeof schema>;
 
@@ -55,7 +55,7 @@ function EditEmployee() {
       reset({
         name: employee.name,
         email: employee.email,
-        role: employee.role === "ADMIN" ? "USER" : employee.role,
+        role: employee.role as never,
         subRole: employee.subRole ?? undefined,
         division: employee.division,
         designation: employee.designation,
@@ -71,7 +71,7 @@ function EditEmployee() {
   const onSubmit = async (v: FormVals) => {
     await updateEmployee(empId, {
       name: v.name, email: v.email, role: v.role,
-      subRole: (v.role === "USER" ? null : (v.subRole as never)) ?? null,
+      subRole: (v.role === "USER" || v.role === "ADMIN" ? null : (v.subRole as never)) ?? null,
       division: v.division as never, designation: v.designation, floor: v.floor, isActive: v.isActive,
     });
     toast.success("Employee updated");
@@ -96,6 +96,7 @@ function EditEmployee() {
                   <SelectItem value="USER">User</SelectItem>
                   <SelectItem value="L2">L2</SelectItem>
                   <SelectItem value="L3">L3</SelectItem>
+                  <SelectItem value="ADMIN">Admin</SelectItem>
                 </SelectContent>
               </Select>
             </Field>

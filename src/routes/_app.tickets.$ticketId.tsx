@@ -14,14 +14,25 @@ import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import { PriorityBadge } from "@/components/common/PriorityBadge";
 import { Pager } from "@/components/common/Pager";
-import { addComment, getTicket, listMembers, listTrail, reassignTicket, updateStatus } from "@/services/mock";
+import { addComment, getTicket, listMembers, listTrail, reassignTicket, updateStatus, deleteTicket } from "@/services/mock";
 import { useCurrentUser } from "@/lib/auth";
 import { formatIstDateTime } from "@/lib/format";
 import { L2_SUBROLES, L3_SUBROLES } from "@/types";
 import type { Role, TicketStatus, TrailAction, TrailLog } from "@/types";
 import { toast } from "sonner";
-import { ArrowLeft, CheckCircle2, ExternalLink, FileSpreadsheet, FileText, MessageSquare, RefreshCcw } from "lucide-react";
+import { ArrowLeft, CheckCircle2, ExternalLink, FileSpreadsheet, FileText, MessageSquare, RefreshCcw, Trash2 } from "lucide-react";
 import { exportTrailToExcel, exportTrailToPdf } from "@/lib/trail-export";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/_app/tickets/$ticketId")({
   component: TicketDetail,
@@ -37,14 +48,24 @@ function TicketDetail() {
   const { data: t } = useQuery({ queryKey: ["ticket", ticketId], queryFn: () => getTicket(ticketId) });
   if (t === undefined) return null;
   if (t === null) throw notFound();
-  const canManage = user.role === "L2" || user.role === "L3";
   const isL3 = user.role === "L3";
   const isL2 = user.role === "L2";
   const isAdmin = user.role === "ADMIN";
   const isUser = user.role === "USER";
   const isClosed = t!.currentStatus === "Closed";
-  const showManage = canManage && !isClosed;
+  const showManage = !isClosed;
   const showTrailInDetails = isAdmin || isL2 || isL3;
+
+  const onDelete = async () => {
+    try {
+      await deleteTicket(ticketId);
+      toast.success("Ticket deleted successfully.");
+      qc.invalidateQueries({ queryKey: ["tickets"] });
+      router.navigate({ to: "/admin/dashboard" });
+    } catch (e: any) {
+      toast.error(e.response?.data?.message || "Failed to delete ticket.");
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -52,24 +73,50 @@ function TicketDetail() {
         title={t!.summary}
         subtitle={`${t!.ticketId} · ${t!.division} · ${t!.type}`}
         actions={
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              if (typeof window !== "undefined" && window.history.length > 1) {
-                router.history.back();
-              } else {
-                const fallback =
-                  user.role === "ADMIN" ? "/admin/dashboard"
-                  : user.role === "L3" ? "/l3/tickets"
-                  : user.role === "L2" ? "/l2/tickets"
-                  : "/user/tickets";
-                router.navigate({ to: fallback });
-              }
-            }}
-          >
-            <ArrowLeft className="mr-1.5 h-4 w-4" /> Back
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (typeof window !== "undefined" && window.history.length > 1) {
+                  router.history.back();
+                } else {
+                  const fallback =
+                    user.role === "ADMIN" ? "/admin/dashboard"
+                    : user.role === "L3" ? "/admin/l3-tickets"
+                    : user.role === "L2" ? "/l2/tickets"
+                    : "/user/tickets";
+                  router.navigate({ to: fallback });
+                }
+              }}
+            >
+              <ArrowLeft className="mr-1.5 h-4 w-4" /> Back
+            </Button>
+
+            {(isAdmin || isL3) && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="sm">
+                    <Trash2 className="mr-1.5 h-4 w-4" /> Delete Ticket
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently delete ticket <span className="font-mono font-semibold">{t!.ticketId}</span> and all related history records.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={onDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      Yes, Delete Ticket
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+          </div>
         }
       />
 
@@ -136,7 +183,7 @@ function TicketDetail() {
             </div>
           </CardContent></Card>
 
-          {showManage && <ManagePanel ticketId={t!.ticketId} currentStatus={t!.currentStatus} tabular={isL3 || isL2} />}
+          {showManage && <ManagePanel ticketId={t!.ticketId} currentStatus={t!.currentStatus} />}
           {showTrailInDetails && (
             <div className="mt-4">
               <TrailTable ticketId={t!.ticketId} generatedBy={`${user.name} (${user.empId})`} />
@@ -174,7 +221,7 @@ function TicketDetail() {
     );
   }
 
-  function ManagePanel({ ticketId, currentStatus, tabular = false }: { ticketId: string; currentStatus: TicketStatus; tabular?: boolean }) {
+  function ManagePanel({ ticketId, currentStatus }: { ticketId: string; currentStatus: TicketStatus }) {
     const [comment, setComment] = useState("");
     const [reassignLevel, setReassignLevel] = useState<"L2" | "L3">("L2");
     const [reassignSub, setReassignSub] = useState<string>("");
@@ -182,33 +229,52 @@ function TicketDetail() {
     const [closing, setClosing] = useState(false);
     const [closeComment, setCloseComment] = useState("");
     const [onlyComment, setOnlyComment] = useState("");
-    const canClose = user.role === "L3" && currentStatus !== "Closed";
-    const showCommentOnly = user.role === "L2";
+    const [resolveComment, setResolveComment] = useState("");
+    const [resolving, setResolving] = useState(false);
+
     const { data: members = [] } = useQuery({
       queryKey: ["members", reassignLevel, reassignSub], enabled: !!reassignSub,
       queryFn: () => listMembers(reassignLevel, reassignSub),
     });
 
-    const onComment = async () => {
-      if (!comment.trim()) return;
-      await addComment(ticketId, comment, user);
-      setComment("");
-      toast.success("Comment added");
-      qc.invalidateQueries({ queryKey: ["trail", ticketId] });
-      qc.invalidateQueries({ queryKey: ["assignee-tickets"] });
-    };
+    const resolvedAtDate = t!.resolvedAt ? new Date(t!.resolvedAt) : null;
+    const isMoreThan15Days = resolvedAtDate
+      ? (new Date().getTime() - resolvedAtDate.getTime()) / (1000 * 60 * 60 * 24) > 15
+      : false;
+
+    const canUserClose = user.role === "USER" && currentStatus === "Resolved" && !isMoreThan15Days && user.empId === t!.createdBy;
+    const canL3Close = user.role === "L3" && currentStatus === "Resolved" && isMoreThan15Days;
+
+    const tabs: { value: string; label: string; icon: any }[] = [
+      { value: "comment", label: "Comment Only", icon: MessageSquare }
+    ];
+
+    if (user.role === "L2" || user.role === "L3") {
+      tabs.push({ value: "reassign", label: "Reassign", icon: RefreshCcw });
+    }
+
+    if (user.role === "L3" && currentStatus === "Open") {
+      tabs.push({ value: "resolve", label: "Resolve Ticket", icon: CheckCircle2 });
+    }
+
+    if (canUserClose || canL3Close) {
+      tabs.push({ value: "close", label: "Close Ticket", icon: CheckCircle2 });
+    }
+
     const onReassign = async () => {
-      if (!reassignMember) return;
-      await reassignTicket(ticketId, reassignMember, user);
-      if (comment.trim()) {
-        await addComment(ticketId, comment, user);
+      if (!reassignMember || !comment.trim()) return;
+      try {
+        await reassignTicket(ticketId, reassignMember, comment.trim());
         setComment("");
+        toast.success("Ticket reassigned successfully");
+        qc.invalidateQueries({ queryKey: ["ticket", ticketId] });
+        qc.invalidateQueries({ queryKey: ["trail", ticketId] });
+        qc.invalidateQueries({ queryKey: ["assignee-tickets"] });
+      } catch (e: any) {
+        toast.error(e.response?.data?.message || "Failed to reassign");
       }
-      toast.success("Ticket reassigned");
-      qc.invalidateQueries({ queryKey: ["ticket", ticketId] });
-      qc.invalidateQueries({ queryKey: ["trail", ticketId] });
-      qc.invalidateQueries({ queryKey: ["assignee-tickets"] });
     };
+
     const onClose = async () => {
       if (!closeComment.trim()) {
         toast.error("A comment is required to close the ticket");
@@ -216,58 +282,84 @@ function TicketDetail() {
       }
       setClosing(true);
       try {
-        await updateStatus(ticketId, "Closed", user, closeComment.trim());
+        await updateStatus(ticketId, "Closed", closeComment.trim());
         toast.success("Ticket closed");
         setCloseComment("");
         qc.invalidateQueries({ queryKey: ["ticket", ticketId] });
         qc.invalidateQueries({ queryKey: ["trail", ticketId] });
         qc.invalidateQueries({ queryKey: ["assignee-tickets"] });
+      } catch (e: any) {
+        toast.error(e.response?.data?.message || "Failed to close ticket");
       } finally {
         setClosing(false);
       }
     };
-    const onCommentOnly = async () => {
-      if (!onlyComment.trim()) return;
-      await addComment(ticketId, onlyComment.trim(), user);
-      setOnlyComment("");
-      toast.success("Comment added");
-      qc.invalidateQueries({ queryKey: ["ticket", ticketId] });
-      qc.invalidateQueries({ queryKey: ["trail", ticketId] });
-      qc.invalidateQueries({ queryKey: ["assignee-tickets"] });
+
+    const onResolve = async () => {
+      if (!resolveComment.trim()) {
+        toast.error("A comment is required to resolve the ticket");
+        return;
+      }
+      setResolving(true);
+      try {
+        await updateStatus(ticketId, "Resolved", resolveComment.trim());
+        toast.success("Ticket resolved");
+        setResolveComment("");
+        qc.invalidateQueries({ queryKey: ["ticket", ticketId] });
+        qc.invalidateQueries({ queryKey: ["trail", ticketId] });
+        qc.invalidateQueries({ queryKey: ["assignee-tickets"] });
+      } catch (e: any) {
+        toast.error(e.response?.data?.message || "Failed to resolve ticket");
+      } finally {
+        setResolving(false);
+      }
     };
 
-    if (tabular) {
-      const defaultTab = "comment";
+    const onCommentOnly = async () => {
+      if (!onlyComment.trim()) return;
+      try {
+        await addComment(ticketId, onlyComment.trim(), user);
+        setOnlyComment("");
+        toast.success("Comment added");
+        qc.invalidateQueries({ queryKey: ["ticket", ticketId] });
+        qc.invalidateQueries({ queryKey: ["trail", ticketId] });
+        qc.invalidateQueries({ queryKey: ["assignee-tickets"] });
+      } catch (e: any) {
+        toast.error(e.response?.data?.message || "Failed to add comment");
+      }
+    };
 
-      return (
-        <Card className="mt-4 border border-slate-200 dark:border-slate-800">
-          <CardHeader>
-            <CardTitle className="text-base">Manage Ticket</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <Tabs defaultValue={defaultTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-2 lg:grid-cols-3 max-w-md mb-4 bg-muted/50">
-                <TabsTrigger value="comment" className="text-xs font-semibold">
-                  <MessageSquare className="mr-1.5 h-3.5 w-3.5" /> Comment Only
-                </TabsTrigger>
-                <TabsTrigger value="reassign" className="text-xs font-semibold">
-                  <RefreshCcw className="mr-1.5 h-3.5 w-3.5" /> Reassign
-                </TabsTrigger>
-                {canClose && (
-                  <TabsTrigger value="close" className="text-xs font-semibold">
-                    <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" /> Close Ticket
-                  </TabsTrigger>
-                )}
+    const defaultTab = tabs[0]?.value || "comment";
+
+    return (
+      <Card className="mt-4 border border-slate-200 dark:border-slate-800">
+        <CardHeader>
+          <CardTitle className="text-base">Manage Ticket</CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <Tabs defaultValue={defaultTab} className="w-full">
+            {tabs.length > 1 && (
+              <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 max-w-lg mb-4 bg-muted/50">
+                {tabs.map((tab) => {
+                  const Icon = tab.icon;
+                  return (
+                    <TabsTrigger key={tab.value} value={tab.value} className="text-xs font-semibold">
+                      <Icon className="mr-1.5 h-3.5 w-3.5" /> {tab.label}
+                    </TabsTrigger>
+                  );
+                })}
               </TabsList>
+            )}
 
-              {/* Tab 1: Comment Only */}
+            {/* Tab 1: Comment Only */}
+            {tabs.some(t => t.value === "comment") && (
               <TabsContent value="comment" className="space-y-4 mt-0">
                 <div className="space-y-1.5">
                   <Label htmlFor="manage-comment-only">Your Comment</Label>
                   <Textarea
                     id="manage-comment-only"
                     rows={3}
-                    placeholder="Add a comment without changing the assignee…"
+                    placeholder="Add a comment without changing status or assignee…"
                     value={onlyComment}
                     onChange={(e) => setOnlyComment(e.target.value)}
                     className="bg-slate-50/50 dark:bg-slate-900/50"
@@ -279,8 +371,10 @@ function TicketDetail() {
                   </Button>
                 </div>
               </TabsContent>
+            )}
 
-              {/* Tab 2: Reassign */}
+            {/* Tab 2: Reassign */}
+            {tabs.some(t => t.value === "reassign") && (
               <TabsContent value="reassign" className="space-y-4 mt-0">
                 <div className="grid gap-4 md:grid-cols-3">
                   <div className="space-y-1.5">
@@ -308,89 +402,69 @@ function TicketDetail() {
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Reassignment Comment (optional)</Label>
+                  <Label>Reassignment Comment <span className="text-destructive">*</span></Label>
                   <Textarea
                     rows={3}
-                    placeholder="Add a comment to include with the reassignment…"
+                    placeholder="Add a comment to include with the reassignment (required)…"
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
                     className="bg-slate-50/50 dark:bg-slate-900/50"
                   />
                 </div>
                 <div className="flex justify-end">
-                  <Button onClick={onReassign} disabled={!reassignMember}>
-                    Reassign{comment.trim() ? " & Comment" : ""}
+                  <Button onClick={onReassign} disabled={!reassignMember || !comment.trim()}>
+                    Reassign &amp; Comment
                   </Button>
                 </div>
               </TabsContent>
+            )}
 
-              {/* Tab 3: Close Ticket */}
-              {canClose && (
-                <TabsContent value="close" className="space-y-4 mt-0">
-                  <div className="space-y-1.5">
-                    <Label>Closure Comment <span className="text-destructive">*</span></Label>
-                    <Textarea
-                      rows={3}
-                      placeholder="Explain the reason for closing this ticket (required)…"
-                      value={closeComment}
-                      onChange={(e) => setCloseComment(e.target.value)}
-                      className="bg-slate-50/50 dark:bg-slate-900/50"
-                    />
-                  </div>
-                  <div className="flex items-center justify-between gap-4 border-t border-slate-100 dark:border-slate-800 pt-3">
-                    <p className="text-xs text-muted-foreground">Once closed, no further actions can be taken on this ticket.</p>
-                    <Button variant="default" onClick={onClose} disabled={closing || !closeComment.trim()}>
-                      {closing ? "Closing…" : "Close Ticket"}
-                    </Button>
-                  </div>
-                </TabsContent>
-              )}
-            </Tabs>
-          </CardContent>
-        </Card>
-      );
-    }
+            {/* Tab 3: Resolve Ticket */}
+            {tabs.some(t => t.value === "resolve") && (
+              <TabsContent value="resolve" className="space-y-4 mt-0">
+                <div className="space-y-1.5">
+                  <Label>Resolution Comment <span className="text-destructive">*</span></Label>
+                  <Textarea
+                    rows={3}
+                    placeholder="Explain the resolution details (required)…"
+                    value={resolveComment}
+                    onChange={(e) => setResolveComment(e.target.value)}
+                    className="bg-slate-50/50 dark:bg-slate-900/50"
+                  />
+                </div>
+                <div className="flex items-center justify-between gap-4 border-t border-slate-100 dark:border-slate-800 pt-3">
+                  <p className="text-xs text-muted-foreground">This will set the status to Resolved and assign the ticket back to the creator.</p>
+                  <Button variant="default" onClick={onResolve} disabled={resolving || !resolveComment.trim()}>
+                    {resolving ? "Resolving…" : "Resolve Ticket"}
+                  </Button>
+                </div>
+              </TabsContent>
+            )}
 
-    return (
-      <Card className="mt-4">
-        <CardHeader><CardTitle className="text-base">Manage Ticket</CardTitle></CardHeader>
-        <CardContent className="grid gap-6 md:grid-cols-2">
-          <section className="space-y-2">
-            <div className="flex items-center gap-2 text-sm font-medium"><MessageSquare className="h-4 w-4" /> Add Comment</div>
-            <Textarea rows={4} placeholder="Comment…" value={comment} onChange={e => setComment(e.target.value)} />
-            <Input type="file" />
-            <Button onClick={onComment} disabled={!comment.trim()} className="w-full">Post comment</Button>
-          </section>
-
-          <section className="space-y-2">
-            <div className="flex items-center gap-2 text-sm font-medium"><RefreshCcw className="h-4 w-4" /> Reassign</div>
-            <div className="space-y-1.5"><Label>Level</Label>
-              <Select value={reassignLevel} onValueChange={(v) => { setReassignLevel(v as "L2" | "L3"); setReassignSub(""); setReassignMember(""); }}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent><SelectItem value="L2">L2</SelectItem><SelectItem value="L3">L3</SelectItem></SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5"><Label>Category</Label>
-              <Select value={reassignSub} onValueChange={(v) => { setReassignSub(v); setReassignMember(""); }}>
-                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent>{(reassignLevel === "L2" ? L2_SUBROLES : L3_SUBROLES).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5"><Label>Member</Label>
-              <Select value={reassignMember} onValueChange={setReassignMember}>
-                <SelectTrigger><SelectValue placeholder={reassignSub ? "Select member" : "Pick category"} /></SelectTrigger>
-                <SelectContent>{members.map(m => <SelectItem key={m.empId} value={m.empId}>{m.name}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-            <Button onClick={onReassign} disabled={!reassignMember} className="w-full">Reassign</Button>
-          </section>
-          {canClose && (
-            <section className="space-y-2 md:col-span-2">
-              <div className="flex items-center gap-2 text-sm font-medium"><CheckCircle2 className="h-4 w-4" /> Close Ticket</div>
-              <p className="text-sm text-muted-foreground">Mark this ticket as Closed.</p>
-              <Button onClick={onClose} disabled={closing}>{closing ? "Closing…" : "Close Ticket"}</Button>
-            </section>
-          )}
+            {/* Tab 4: Close Ticket */}
+            {tabs.some(t => t.value === "close") && (
+              <TabsContent value="close" className="space-y-4 mt-0">
+                <div className="space-y-1.5">
+                  <Label>Closure Comment <span className="text-destructive">*</span></Label>
+                  <Textarea
+                    rows={3}
+                    placeholder="Explain the reason for closing this ticket (required)…"
+                    value={closeComment}
+                    onChange={(e) => setCloseComment(e.target.value)}
+                    className="bg-slate-50/50 dark:bg-slate-900/50"
+                  />
+                </div>
+                <div className="flex items-center justify-between gap-4 border-t border-slate-100 dark:border-slate-800 pt-3">
+                  <p className="text-xs text-muted-foreground font-medium text-amber-600 dark:text-amber-400">
+                    {canL3Close ? "Closing this ticket on behalf of the user due to 15 days of inactivity." : "Please verify the resolution and close this ticket."}
+                  </p>
+                  <Button variant="default" onClick={onClose} disabled={closing || !closeComment.trim()}>
+                    {closing ? "Closing…" : "Close Ticket"}
+                  </Button>
+                </div>
+              </TabsContent>
+            )}
+          </Tabs>
         </CardContent>
       </Card>
     );
@@ -488,7 +562,7 @@ function TrailTable({ ticketId, generatedBy }: { ticketId: string; generatedBy: 
               </TableCell>
               <TableCell>{r.action}</TableCell>
               <TableCell className="max-w-md text-muted-foreground">{r.comment ?? "—"}</TableCell>
-              <TableCell><Badge variant="secondary">{deriveViewStatus(r)}</Badge></TableCell>
+              <TableCell><StatusBadge status={r.currentStatus || "Open"} /></TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -496,14 +570,4 @@ function TrailTable({ ticketId, generatedBy }: { ticketId: string; generatedBy: 
       {data && <Pager page={data.page} pageSize={data.pageSize} total={data.total} onPageChange={setPage} />}
     </CardContent></Card>
   );
-}
-
-// Display-only status for the trail table; mapped to {Open, Assigned, Closed}.
-function deriveViewStatus(r: TrailLog): "Open" | "Assigned" | "Closed" {
-  if (r.action === "Close" || r.currentStatus === "Closed") return "Closed";
-  if (r.action === "Ticket Created") return "Open";
-  if (r.action === "Assignment" || r.action === "Reassignment") return "Assigned";
-  if (r.currentStatus === "Open") return "Open";
-  if (r.currentStatus === "Assigned") return "Assigned";
-  return "Assigned";
 }

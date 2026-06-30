@@ -76,37 +76,26 @@ export async function createTicket(req: AuthenticatedRequest, res: Response) {
       currentAssignee: assignee.empId,
       currentAssigneeName: assignee.name,
       currentAssigneeRole: assignee.role,
-      currentStatus: "Assigned", // Directly assigned on creation
+      currentStatus: "Open", // Directly assigned on creation, status is Open
       createdBy: creator.empId,
       createdByName: creator.name,
       assignedAt: now,
       autoCloseEligible: true
     });
 
-    // Create TrailLog for creation
-    await TrailLog.create({
-      id: crypto.randomUUID(),
-      ticketId,
-      action: "Ticket Created",
-      comment: summary,
-      performedBy: creator.empId,
-      performedByName: creator.name,
-      performerRole: creator.role,
-      currentStatus: "Open",
-      createdAt: now
-    });
+    const roleString = assignee.subRole ? ` (${assignee.role} ${assignee.subRole})` : ` (${assignee.role})`;
 
-    // Create TrailLog for assignment
+    // Create TrailLog for creation & initial assignment
     await TrailLog.create({
       id: crypto.randomUUID(),
       ticketId,
-      action: "Assignment",
-      comment: `Assigned to ${assignee.name}`,
+      action: `Ticket Created and Assigned to ${assignee.name}${roleString}`,
+      comment: description,
       performedBy: creator.empId,
       performedByName: creator.name,
       performerRole: creator.role,
       toAssignee: assignee.empId,
-      currentStatus: "Assigned",
+      currentStatus: "Open",
       createdAt: now
     });
 
@@ -163,7 +152,14 @@ export async function listTickets(req: AuthenticatedRequest, res: Response) {
 
     if (division) query.division = division;
     if (priority) query.priority = priority;
-    if (status) query.currentStatus = status;
+    if (status) {
+      if (status === "Assigned") {
+        query.currentStatus = "Open";
+        query.currentAssigneeRole = { $in: ["L2", "L3"] };
+      } else {
+        query.currentStatus = status;
+      }
+    }
     if (assignee) query.currentAssignee = assignee;
     if (createdBy) query.createdBy = createdBy;
 
@@ -283,11 +279,15 @@ export async function addComment(req: AuthenticatedRequest, res: Response) {
 export async function reassignTicket(req: AuthenticatedRequest, res: Response) {
   try {
     const { ticketId } = req.params;
-    const { toEmpId } = req.body;
+    const { toEmpId, comment } = req.body;
     const performerEmpId = req.user?.empId;
 
     if (!toEmpId) {
       return res.status(400).json({ message: "Assignee ID is required" });
+    }
+
+    if (!comment || !comment.trim()) {
+      return res.status(400).json({ message: "Comment is required for this action" });
     }
 
     const ticket = await Ticket.findOne({ ticketId });
@@ -299,40 +299,58 @@ export async function reassignTicket(req: AuthenticatedRequest, res: Response) {
       return res.status(400).json({ message: "Cannot reassign a closed ticket" });
     }
 
-    const assignee = await Employee.findOne({ empId: toEmpId });
-    if (!assignee) {
-      return res.status(400).json({ message: "Target assignee employee not found" });
-    }
-
     const performer = await Employee.findOne({ empId: performerEmpId });
     if (!performer) {
       return res.status(400).json({ message: "Performer employee not found" });
     }
 
+    if (performer.role === "USER") {
+      return res.status(403).json({ message: "Users are not allowed to reassign tickets" });
+    }
+
+    const assignee = await Employee.findOne({ empId: toEmpId });
+    if (!assignee) {
+      return res.status(400).json({ message: "Target assignee employee not found" });
+    }
+
+    if (performer.role === "L2" && assignee.role === "USER") {
+      return res.status(400).json({ message: "L2 members can only assign to L2 or L3 employees" });
+    }
+    if (performer.role === "L3" && assignee.role === "USER") {
+      return res.status(400).json({ message: "L3 members can only assign to L2 or L3 employees" });
+    }
+
     const prevName = ticket.currentAssigneeName;
     const prevEmpId = ticket.currentAssignee;
+    const prevStatus = ticket.currentStatus;
     const now = new Date();
 
-    // Update ticket assignee and ensure status is Assigned
+    // Update ticket assignee and ensure status is Open
     ticket.currentAssignee = assignee.empId;
     ticket.currentAssigneeName = assignee.name;
     ticket.currentAssigneeRole = assignee.role;
-    ticket.currentStatus = "Assigned";
+    ticket.currentStatus = "Open";
     ticket.assignedAt = now;
     await ticket.save();
+
+    let actionText = `Ticket Reassigned to ${assignee.name} (${assignee.role}${assignee.subRole ? ' ' + assignee.subRole : ''})`;
+    if (performer.role === "L3" && assignee.role === "L2") {
+      actionText = `Ticket Assigned to ${assignee.name} (${assignee.role}${assignee.subRole ? ' ' + assignee.subRole : ''})`;
+    }
 
     // Create TrailLog for reassignment
     await TrailLog.create({
       id: crypto.randomUUID(),
       ticketId,
-      action: "Reassignment",
-      comment: `Reassigned from ${prevName} to ${assignee.name}`,
+      action: actionText,
+      comment: comment.trim(),
       performedBy: performer.empId,
       performedByName: performer.name,
       performerRole: performer.role,
       fromAssignee: prevEmpId,
       toAssignee: assignee.empId,
-      currentStatus: "Assigned",
+      previousStatus: prevStatus,
+      currentStatus: "Open",
       createdAt: now
     });
 
@@ -377,6 +395,10 @@ export async function updateStatus(req: AuthenticatedRequest, res: Response) {
       return res.status(400).json({ message: "Status is required" });
     }
 
+    if (!comment || !comment.trim()) {
+      return res.status(400).json({ message: "Comment is required for this action" });
+    }
+
     const ticket = await Ticket.findOne({ ticketId });
     if (!ticket) {
       return res.status(404).json({ message: "Ticket not found" });
@@ -387,37 +409,104 @@ export async function updateStatus(req: AuthenticatedRequest, res: Response) {
       return res.status(400).json({ message: "Performer employee not found" });
     }
 
+    if (performer.role === "L2") {
+      return res.status(403).json({ message: "L2 employees are not allowed to change ticket status" });
+    }
+
     const prevStatus = ticket.currentStatus;
     const now = new Date();
 
-    ticket.currentStatus = status;
     if (status === "Resolved") {
+      if (prevStatus !== "Open") {
+        return res.status(400).json({ message: "Only Open tickets can be marked as Resolved" });
+      }
+      if (performer.role !== "L3" && performer.role !== "ADMIN") {
+        return res.status(403).json({ message: "Only L3 members can resolve tickets" });
+      }
+
+      const creator = await Employee.findOne({ empId: ticket.createdBy });
+      if (!creator) {
+        return res.status(400).json({ message: "Ticket creator employee not found" });
+      }
+
+      ticket.currentAssignee = creator.empId;
+      ticket.currentAssigneeName = creator.name;
+      ticket.currentAssigneeRole = creator.role;
+      ticket.currentStatus = "Resolved";
       ticket.resolvedAt = now;
+      await ticket.save();
+
+      const actionText = `Ticket Resolved and Assigned to ${creator.name}`;
+      await TrailLog.create({
+        id: crypto.randomUUID(),
+        ticketId,
+        action: actionText,
+        comment: comment.trim(),
+        performedBy: performer.empId,
+        performedByName: performer.name,
+        performerRole: performer.role,
+        toAssignee: creator.empId,
+        previousStatus: prevStatus,
+        currentStatus: "Resolved",
+        createdAt: now
+      });
+
+    } else if (status === "Closed") {
+      if (prevStatus !== "Resolved") {
+        return res.status(400).json({ message: "Only Resolved tickets can be Closed" });
+      }
+
+      const resolvedAtTime = ticket.resolvedAt ? ticket.resolvedAt.getTime() : ticket.createdAt.getTime();
+      const daysDiff = (now.getTime() - resolvedAtTime) / (1000 * 60 * 60 * 24);
+
+      if (daysDiff <= 15) {
+        if (performer.empId !== ticket.createdBy) {
+          return res.status(403).json({ message: "Only the ticket creator can close this ticket within 15 days of resolution" });
+        }
+
+        ticket.currentStatus = "Closed";
+        ticket.closedAt = now;
+        await ticket.save();
+
+        await TrailLog.create({
+          id: crypto.randomUUID(),
+          ticketId,
+          action: "Ticket Closed by User",
+          comment: comment.trim(),
+          performedBy: performer.empId,
+          performedByName: performer.name,
+          performerRole: performer.role,
+          previousStatus: prevStatus,
+          currentStatus: "Closed",
+          createdAt: now
+        });
+
+      } else {
+        if (performer.role !== "L3" && performer.role !== "ADMIN") {
+          return res.status(403).json({ message: "Only L3 members can close tickets after the 15-day review period" });
+        }
+
+        ticket.currentStatus = "Closed";
+        ticket.closedAt = now;
+        await ticket.save();
+
+        await TrailLog.create({
+          id: crypto.randomUUID(),
+          ticketId,
+          action: "Ticket Closed Due to User Inaction",
+          comment: comment.trim(),
+          performedBy: performer.empId,
+          performedByName: performer.name,
+          performerRole: performer.role,
+          previousStatus: prevStatus,
+          currentStatus: "Closed",
+          createdAt: now
+        });
+      }
+    } else {
+      return res.status(400).json({ message: "Invalid status transition" });
     }
-    if (status === "Closed") {
-      ticket.closedAt = now;
-    }
 
-    await ticket.save();
-
-    // Map log action type
-    const action = status === "Closed" ? "Close" : status === "Resolved" ? "Resolve" : "Status Change";
-
-    // Create TrailLog
-    await TrailLog.create({
-      id: crypto.randomUUID(),
-      ticketId,
-      action,
-      comment: comment || `Status changed to ${status}`,
-      performedBy: performer.empId,
-      performedByName: performer.name,
-      performerRole: performer.role,
-      previousStatus: prevStatus,
-      currentStatus: status,
-      createdAt: now
-    });
-
-    // Notify ticket owner (and assignee if changed by someone else)
     const notificationTargets = new Set<string>();
     if (performer.empId !== ticket.createdBy) notificationTargets.add(ticket.createdBy);
     if (performer.empId !== ticket.currentAssignee) notificationTargets.add(ticket.currentAssignee);
@@ -435,13 +524,12 @@ export async function updateStatus(req: AuthenticatedRequest, res: Response) {
       sendSocketNotification(targetId, notif.toObject());
     }
 
-    // Write AuditLog
     await AuditLog.create({
       id: crypto.randomUUID(),
       empId: performer.empId,
       empName: performer.name,
       role: performer.role,
-      action,
+      action: status === "Closed" ? "Close" : "Resolve",
       context: ticketId,
       createdAt: now
     });
@@ -495,6 +583,38 @@ export async function listAssigneeTicketsSplit(req: AuthenticatedRequest, res: R
     });
   } catch (error: any) {
     console.error("List assignee tickets split error:", error);
+    return res.status(500).json({ message: error.message || "Internal server error" });
+  }
+}
+
+export async function deleteTicket(req: AuthenticatedRequest, res: Response) {
+  try {
+    const { ticketId } = req.params;
+    const ticket = await Ticket.findOne({ ticketId });
+
+    if (!ticket) {
+      return res.status(404).json({ message: "Ticket not found" });
+    }
+
+    await Ticket.deleteOne({ ticketId });
+
+    // Write AuditLog
+    if (req.user) {
+      const performer = await Employee.findOne({ empId: req.user.empId });
+      await AuditLog.create({
+        id: crypto.randomUUID(),
+        empId: req.user.empId,
+        empName: performer?.name || "System Admin",
+        role: req.user.role,
+        action: "Ticket Delete",
+        context: ticketId,
+        createdAt: new Date()
+      });
+    }
+
+    return res.status(204).send();
+  } catch (error: any) {
+    console.error("Delete ticket error:", error);
     return res.status(500).json({ message: error.message || "Internal server error" });
   }
 }
