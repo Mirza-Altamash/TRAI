@@ -16,8 +16,8 @@ services:
       - PORT=5000
       - NODE_ENV=production
       - MONGODB_URI=mongodb://mongodb:27017/trai_citizen_hub
-      - JWT_ACCESS_SECRET=0c897f26d246603a1154c1ea102377b8e1f5799aa568472f8832a76f2d24268e
-      - JWT_REFRESH_SECRET=b63c7b2c01997fa44dbdfa8684d2847c23a7e48b30e0a5e8de9d5f7f2b1d033e
+      - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
     depends_on:
       - mongodb
     volumes:
