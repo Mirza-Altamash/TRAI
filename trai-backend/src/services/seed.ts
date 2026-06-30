@@ -227,7 +227,7 @@ export async function seedDatabase() {
 
     await Notification.create({
       id: crypto.randomUUID(),
-      empId: "TRAI-USR-001",
+      empId: ticketsList[2].createdBy,
       title: "Status changed",
       description: `${ticketsList[2].ticketId} marked Resolved`,
       ticketId: ticketsList[2].ticketId,
@@ -237,12 +237,22 @@ export async function seedDatabase() {
 
     await Notification.create({
       id: crypto.randomUUID(),
-      empId: "TRAI-USR-001",
+      empId: ticketsList[4].createdBy,
       title: "Comment added",
       description: `New comment on ${ticketsList[4].ticketId}`,
       ticketId: ticketsList[4].ticketId,
       createdAt: iso(1, 17),
       read: true
+    });
+
+    await Notification.create({
+      id: crypto.randomUUID(),
+      empId: "TRAI-USR-001",
+      title: "Status changed",
+      description: `${ticketsList[0].ticketId} marked Resolved`,
+      ticketId: ticketsList[0].ticketId,
+      createdAt: iso(0, 8),
+      read: false
     });
   }
 
