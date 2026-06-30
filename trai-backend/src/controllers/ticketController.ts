@@ -10,7 +10,7 @@ import { sendSocketNotification } from "../config/socket";
 
 export async function createTicket(req: AuthenticatedRequest, res: Response) {
   try {
-    const { division, priority, type, portalName, portalUrl, reportName, summary, description, assigneeEmpId } = req.body;
+    const { division, priority, type, portalName, portalUrl, reportName, summary, description, assigneeEmpId, comment } = req.body;
     const creatorEmpId = req.user?.empId;
 
     if (!division || !priority || !type || !summary || !description || !assigneeEmpId || !creatorEmpId) {
@@ -90,7 +90,7 @@ export async function createTicket(req: AuthenticatedRequest, res: Response) {
       id: crypto.randomUUID(),
       ticketId,
       action: `Ticket Created and Assigned to ${assignee.name}${roleString}`,
-      comment: description,
+      comment: comment?.trim() || description,
       performedBy: creator.empId,
       performedByName: creator.name,
       performerRole: creator.role,

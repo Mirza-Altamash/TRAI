@@ -29,6 +29,7 @@ const schema = z.object({
   level: z.enum(["L2", "L3"]),
   subRole: z.string().min(1, "Required"),
   assignee: z.string().min(1, "Required"),
+  comment: z.string().optional(),
 });
 type FormVals = z.infer<typeof schema>;
 
@@ -57,6 +58,7 @@ function NewTicket() {
       portalName: v.portalName, portalUrl: v.portalUrl || undefined, reportName: v.reportName,
       summary: v.summary, description: v.description,
       assigneeEmpId: v.assignee,
+      comment: v.comment || undefined,
     }, selectedFiles);
     toast.success(`Ticket ${t.ticketId} created`);
     qc.invalidateQueries({ queryKey: ["tickets"] });
@@ -180,27 +182,38 @@ function NewTicket() {
             <CardTitle className="text-base">Target Assignment</CardTitle>
             <CardDescription>Route this ticket to the appropriate support level and member.</CardDescription>
           </CardHeader>
-          <CardContent className="grid gap-4 md:grid-cols-3">
-            <Field label="Level">
-              <Select value={level} onValueChange={(v) => { setLevel(v as "L2" | "L3"); setValue("level", v as "L2" | "L3"); setSubRole(""); }}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent><SelectItem value="L2">L2</SelectItem><SelectItem value="L3">L3</SelectItem></SelectContent>
-              </Select>
-            </Field>
-            <Field label="Category" error={errors.subRole?.message}>
-              <Select value={subRole} onValueChange={(v) => { setSubRole(v); setValue("subRole", v); }}>
-                <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
-                <SelectContent>
-                  {(level === "L2" ? L2_SUBROLES : L3_SUBROLES).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </Field>
-            <Field label="Member" error={errors.assignee?.message}>
-              <Select onValueChange={(v) => setValue("assignee", v)}>
-                <SelectTrigger><SelectValue placeholder={subRole ? "Select member" : "Pick category first"} /></SelectTrigger>
-                <SelectContent>{members.map(m => <SelectItem key={m.empId} value={m.empId}>{m.name}</SelectItem>)}</SelectContent>
-              </Select>
-            </Field>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-3">
+              <Field label="Level">
+                <Select value={level} onValueChange={(v) => { setLevel(v as "L2" | "L3"); setValue("level", v as "L2" | "L3"); setSubRole(""); }}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent><SelectItem value="L2">L2</SelectItem><SelectItem value="L3">L3</SelectItem></SelectContent>
+                </Select>
+              </Field>
+              <Field label="Category" error={errors.subRole?.message}>
+                <Select value={subRole} onValueChange={(v) => { setSubRole(v); setValue("subRole", v); }}>
+                  <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
+                  <SelectContent>
+                    {(level === "L2" ? L2_SUBROLES : L3_SUBROLES).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field label="Member" error={errors.assignee?.message}>
+                <Select onValueChange={(v) => setValue("assignee", v)}>
+                  <SelectTrigger><SelectValue placeholder={subRole ? "Select member" : "Pick category first"} /></SelectTrigger>
+                  <SelectContent>{members.map(m => <SelectItem key={m.empId} value={m.empId}>{m.name}</SelectItem>)}</SelectContent>
+                </Select>
+              </Field>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="assignment-comment">Assignment Comment</Label>
+              <Textarea
+                id="assignment-comment"
+                placeholder="Add a comment to display in the Complete Trail logs..."
+                rows={3}
+                {...register("comment")}
+              />
+            </div>
           </CardContent>
         </Card>
 

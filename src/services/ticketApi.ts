@@ -33,6 +33,7 @@ export async function createTicket(
     summary: string;
     description: string;
     assigneeEmpId: string;
+    comment?: string;
   },
   files?: FileList | File[] | null
 ): Promise<Ticket> {
@@ -46,6 +47,7 @@ export async function createTicket(
   fd.append("summary", input.summary);
   fd.append("description", input.description);
   fd.append("assigneeEmpId", input.assigneeEmpId);
+  if (input.comment) fd.append("comment", input.comment);
 
   if (files) {
     for (let i = 0; i < files.length; i++) {
