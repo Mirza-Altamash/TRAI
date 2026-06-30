@@ -102,7 +102,14 @@ The application will launch on **`http://localhost:3000`**.
 
 ## 🐳 Docker Deployment (Production)
 
-You can spin up the entire production bundle (MongoDB + Express Backend + React SSR Frontend) using Docker Compose:
+Before running the containers, you need to set your JWT secrets. The easiest way is to create a `.env` file in the **root project directory** (next to `docker-compose.yml`) containing:
+
+```env
+JWT_ACCESS_SECRET=your_access_token_secret_here
+JWT_REFRESH_SECRET=your_refresh_token_secret_here
+```
+
+Then, you can spin up the entire production bundle (MongoDB + Express Backend + React SSR Frontend) using Docker Compose:
 
 ```bash
 docker-compose up --build
