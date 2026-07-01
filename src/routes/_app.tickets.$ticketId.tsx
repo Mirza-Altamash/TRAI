@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import { PriorityBadge } from "@/components/common/PriorityBadge";
 import { Pager } from "@/components/common/Pager";
-import { addComment, getTicket, listMembers, listTrail, reassignTicket, updateStatus, deleteTicket } from "@/services/mock";
+import { addComment, getTicket, listMembers, listTrail, reassignTicket, updateStatus, deleteTicket, reopenTicket } from "@/services/mock";
 import { useCurrentUser } from "@/lib/auth";
 import { formatIstDateTime } from "@/lib/format";
 import { L2_SUBROLES, L3_SUBROLES } from "@/types";
@@ -231,6 +231,8 @@ function TicketDetail() {
     const [onlyComment, setOnlyComment] = useState("");
     const [resolveComment, setResolveComment] = useState("");
     const [resolving, setResolving] = useState(false);
+    const [reopenComment, setReopenComment] = useState("");
+    const [reopening, setReopening] = useState(false);
 
     const { data: members = [] } = useQuery({
       queryKey: ["members", reassignLevel, reassignSub], enabled: !!reassignSub,
@@ -238,12 +240,13 @@ function TicketDetail() {
     });
 
     const resolvedAtDate = t!.resolvedAt ? new Date(t!.resolvedAt) : null;
-    const isMoreThan15Days = resolvedAtDate
-      ? (new Date().getTime() - resolvedAtDate.getTime()) / (1000 * 60 * 60 * 24) > 15
+    const isMoreThan30Days = resolvedAtDate
+      ? (new Date().getTime() - resolvedAtDate.getTime()) / (1000 * 60 * 60 * 24) > 30
       : false;
 
-    const canUserClose = user.role === "USER" && currentStatus === "Resolved" && !isMoreThan15Days && user.empId === t!.createdBy;
-    const canL3Close = user.role === "L3" && currentStatus === "Resolved" && isMoreThan15Days;
+    const canUserClose = user.role === "USER" && currentStatus === "Resolved" && !isMoreThan30Days && user.empId === t!.createdBy;
+    const canUserReopen = user.role === "USER" && currentStatus === "Resolved" && !isMoreThan30Days && user.empId === t!.createdBy;
+    const canL3Close = user.role === "L3" && currentStatus === "Resolved" && isMoreThan30Days;
 
     const tabs: { value: string; label: string; icon: any }[] = [
       { value: "comment", label: "Comment Only", icon: MessageSquare }
@@ -259,6 +262,10 @@ function TicketDetail() {
 
     if (canUserClose || canL3Close) {
       tabs.push({ value: "close", label: "Close Ticket", icon: CheckCircle2 });
+    }
+
+    if (canUserReopen) {
+      tabs.push({ value: "reopen", label: "Reopen Ticket", icon: RefreshCcw });
     }
 
     const onReassign = async () => {
@@ -292,6 +299,26 @@ function TicketDetail() {
         toast.error(e.response?.data?.message || "Failed to close ticket");
       } finally {
         setClosing(false);
+      }
+    };
+
+    const onReopen = async () => {
+      if (!reopenComment.trim()) {
+        toast.error("A comment is required to reopen the ticket");
+        return;
+      }
+      setReopening(true);
+      try {
+        await reopenTicket(ticketId, reopenComment.trim());
+        toast.success("Ticket reopened");
+        setReopenComment("");
+        qc.invalidateQueries({ queryKey: ["ticket", ticketId] });
+        qc.invalidateQueries({ queryKey: ["trail", ticketId] });
+        qc.invalidateQueries({ queryKey: ["assignee-tickets"] });
+      } catch (e: any) {
+        toast.error(e.response?.data?.message || "Failed to reopen ticket");
+      } finally {
+        setReopening(false);
       }
     };
 
@@ -456,10 +483,33 @@ function TicketDetail() {
                 </div>
                 <div className="flex items-center justify-between gap-4 border-t border-slate-100 dark:border-slate-800 pt-3">
                   <p className="text-xs text-muted-foreground font-medium text-amber-600 dark:text-amber-400">
-                    {canL3Close ? "Closing this ticket on behalf of the user due to 15 days of inactivity." : "Please verify the resolution and close this ticket."}
+                    {canL3Close ? "Closing this ticket on behalf of the user due to 30 days of inactivity." : "Please verify the resolution and close this ticket."}
                   </p>
                   <Button variant="default" onClick={onClose} disabled={closing || !closeComment.trim()}>
                     {closing ? "Closing…" : "Close Ticket"}
+                  </Button>
+                </div>
+              </TabsContent>
+            )}
+
+            {/* Tab 5: Reopen Ticket */}
+            {tabs.some(t => t.value === "reopen") && (
+              <TabsContent value="reopen" className="space-y-4 mt-0">
+                <div className="space-y-1.5">
+                  <Label htmlFor="manage-reopen-comment">Reopen Comment <span className="text-destructive">*</span></Label>
+                  <Textarea
+                    id="manage-reopen-comment"
+                    rows={3}
+                    placeholder="Provide the reason for reopening this ticket (required)…"
+                    value={reopenComment}
+                    onChange={(e) => setReopenComment(e.target.value)}
+                    className="bg-slate-50/50 dark:bg-slate-900/50"
+                  />
+                </div>
+                <div className="flex items-center justify-between gap-4 border-t border-slate-100 dark:border-slate-800 pt-3">
+                  <p className="text-xs text-muted-foreground">This will reopen the ticket and assign it back to the L3 supervisor.</p>
+                  <Button variant="default" onClick={onReopen} disabled={reopening || !reopenComment.trim()}>
+                    {reopening ? "Reopening…" : "Reopen Ticket"}
                   </Button>
                 </div>
               </TabsContent>
@@ -479,7 +529,7 @@ function TrailTable({ ticketId, generatedBy }: { ticketId: string; generatedBy: 
   const [search, setSearch] = useState("");
   const [role, setRole] = useState<string>("");
   const [action, setAction] = useState<string>("");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [exporting, setExporting] = useState<null | "pdf" | "excel">(null);
 
   const { data } = useQuery({
@@ -545,28 +595,30 @@ function TrailTable({ ticketId, generatedBy }: { ticketId: string; generatedBy: 
         </div>
       </div>
 
-      <Table>
-        <TableHeader><TableRow>
-          <TableHead>Date & Time</TableHead>
-          <TableHead>Action By &amp; Role</TableHead>
-          <TableHead>Action</TableHead>
-          <TableHead>Comment</TableHead>
-          <TableHead>Status</TableHead>
-        </TableRow></TableHeader>
-        <TableBody>
-          {data?.rows.map(r => (
-            <TableRow key={r.id}>
-              <TableCell className="text-muted-foreground whitespace-nowrap">{formatIstDateTime(r.createdAt)}</TableCell>
-              <TableCell className="font-medium">
-                {r.performedByName} <span className="text-muted-foreground">({r.performerRole})</span>
-              </TableCell>
-              <TableCell>{r.action}</TableCell>
-              <TableCell className="max-w-md text-muted-foreground">{r.comment ?? "—"}</TableCell>
-              <TableCell><StatusBadge status={r.currentStatus || "Open"} /></TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader><TableRow>
+            <TableHead>Date & Time</TableHead>
+            <TableHead>Action By &amp; Role</TableHead>
+            <TableHead>Action</TableHead>
+            <TableHead>Comment</TableHead>
+            <TableHead>Status</TableHead>
+          </TableRow></TableHeader>
+          <TableBody>
+            {data?.rows.map(r => (
+              <TableRow key={r.id}>
+                <TableCell className="text-muted-foreground whitespace-nowrap">{formatIstDateTime(r.createdAt)}</TableCell>
+                <TableCell className="font-medium">
+                  {r.performedByName} <span className="text-muted-foreground">({r.performerRole})</span>
+                </TableCell>
+                <TableCell>{r.action}</TableCell>
+                <TableCell className="text-muted-foreground whitespace-pre-wrap break-words [overflow-wrap:anywhere] min-w-[200px] max-w-md py-2 px-3">{r.comment ?? "—"}</TableCell>
+                <TableCell><StatusBadge status={r.currentStatus || "Open"} /></TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
       {data && <Pager page={data.page} pageSize={data.pageSize} total={data.total} onPageChange={setPage} />}
     </CardContent></Card>
   );

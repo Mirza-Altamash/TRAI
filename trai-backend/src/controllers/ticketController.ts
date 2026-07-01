@@ -404,6 +404,10 @@ export async function updateStatus(req: AuthenticatedRequest, res: Response) {
       return res.status(404).json({ message: "Ticket not found" });
     }
 
+    if (ticket.currentStatus === "Closed") {
+      return res.status(400).json({ message: "Closed tickets cannot be modified" });
+    }
+
     const performer = await Employee.findOne({ empId: performerEmpId });
     if (!performer) {
       return res.status(400).json({ message: "Performer employee not found" });
@@ -459,9 +463,9 @@ export async function updateStatus(req: AuthenticatedRequest, res: Response) {
       const resolvedAtTime = ticket.resolvedAt ? ticket.resolvedAt.getTime() : ticket.createdAt.getTime();
       const daysDiff = (now.getTime() - resolvedAtTime) / (1000 * 60 * 60 * 24);
 
-      if (daysDiff <= 15) {
+      if (daysDiff <= 30) {
         if (performer.empId !== ticket.createdBy) {
-          return res.status(403).json({ message: "Only the ticket creator can close this ticket within 15 days of resolution" });
+          return res.status(403).json({ message: "Only the ticket creator can close this ticket within 30 days of resolution" });
         }
 
         ticket.currentStatus = "Closed";
@@ -471,7 +475,7 @@ export async function updateStatus(req: AuthenticatedRequest, res: Response) {
         await TrailLog.create({
           id: crypto.randomUUID(),
           ticketId,
-          action: "Ticket Closed by User",
+          action: `Ticket Closed by ${performer.name}`,
           comment: comment.trim(),
           performedBy: performer.empId,
           performedByName: performer.name,
@@ -483,7 +487,12 @@ export async function updateStatus(req: AuthenticatedRequest, res: Response) {
 
       } else {
         if (performer.role !== "L3" && performer.role !== "ADMIN") {
-          return res.status(403).json({ message: "Only L3 members can close tickets after the 15-day review period" });
+          return res.status(403).json({ message: "Only the assigned L3 member or Admin can close tickets after the 30-day review period" });
+        }
+
+        const assignedL3 = await getAssignedL3ForTicket(ticket);
+        if (performer.role === "L3" && (!assignedL3 || performer.empId !== assignedL3.empId)) {
+          return res.status(403).json({ message: "Only the assigned L3 member can close this ticket after 30 days" });
         }
 
         ticket.currentStatus = "Closed";
@@ -615,6 +624,136 @@ export async function deleteTicket(req: AuthenticatedRequest, res: Response) {
     return res.status(204).send();
   } catch (error: any) {
     console.error("Delete ticket error:", error);
+    return res.status(500).json({ message: error.message || "Internal server error" });
+  }
+}
+
+export async function getAssignedL3ForTicket(ticket: any) {
+  const lastL3Log = await TrailLog.findOne({
+    ticketId: ticket.ticketId,
+    performerRole: "L3"
+  }).sort({ createdAt: -1 });
+
+  if (lastL3Log) {
+    return { empId: lastL3Log.performedBy, name: lastL3Log.performedByName };
+  }
+
+  // Fallback to finding any L3 employee in the division
+  const defaultL3 = await Employee.findOne({ role: "L3", division: ticket.division, isActive: true });
+  if (defaultL3) {
+    return { empId: defaultL3.empId, name: defaultL3.name };
+  }
+
+  // Fallback to any active L3 employee
+  const fallbackL3 = await Employee.findOne({ role: "L3", isActive: true });
+  if (fallbackL3) {
+    return { empId: fallbackL3.empId, name: fallbackL3.name };
+  }
+
+  return null;
+}
+
+export async function reopenTicket(req: AuthenticatedRequest, res: Response) {
+  try {
+    const { ticketId } = req.params;
+    const { comment } = req.body;
+    const performerEmpId = req.user?.empId;
+
+    if (!comment || !comment.trim()) {
+      return res.status(400).json({ message: "Comment is required to reopen the ticket" });
+    }
+
+    const ticket = await Ticket.findOne({ ticketId });
+    if (!ticket) {
+      return res.status(404).json({ message: "Ticket not found" });
+    }
+
+    if (ticket.currentStatus !== "Resolved") {
+      return res.status(400).json({ message: "Only Resolved tickets can be reopened" });
+    }
+
+    const performer = await Employee.findOne({ empId: performerEmpId });
+    if (!performer) {
+      return res.status(400).json({ message: "Performer employee not found" });
+    }
+
+    // Check if caller is ticket creator
+    if (performer.empId !== ticket.createdBy) {
+      return res.status(403).json({ message: "Only the ticket creator can reopen this ticket" });
+    }
+
+    // Check if within 30 days of resolution
+    const resolvedAtTime = ticket.resolvedAt ? ticket.resolvedAt.getTime() : ticket.createdAt.getTime();
+    const now = new Date();
+    const daysDiff = (now.getTime() - resolvedAtTime) / (1000 * 60 * 60 * 24);
+
+    if (daysDiff > 30) {
+      return res.status(400).json({ message: "Cannot reopen ticket after 30 days of resolution" });
+    }
+
+    // Find the previous/assigned L3 member
+    const assignedL3 = await getAssignedL3ForTicket(ticket);
+    if (!assignedL3) {
+      return res.status(400).json({ message: "No L3 supervisor found to assign the reopened ticket to" });
+    }
+
+    const l3Assignee = await Employee.findOne({ empId: assignedL3.empId });
+    if (!l3Assignee) {
+      return res.status(400).json({ message: "Assigned L3 member no longer exists" });
+    }
+
+    const prevStatus = ticket.currentStatus;
+
+    // Update ticket: status Open, clear resolvedAt, assign to L3
+    ticket.currentAssignee = l3Assignee.empId;
+    ticket.currentAssigneeName = l3Assignee.name;
+    ticket.currentAssigneeRole = l3Assignee.role;
+    ticket.currentStatus = "Open";
+    ticket.assignedAt = now;
+    ticket.resolvedAt = undefined;
+    await ticket.save();
+
+    // Create TrailLog
+    await TrailLog.create({
+      id: crypto.randomUUID(),
+      ticketId,
+      action: `Ticket Reopened and Assigned to ${l3Assignee.name}`,
+      comment: comment.trim(),
+      performedBy: performer.empId,
+      performedByName: performer.name,
+      performerRole: performer.role,
+      toAssignee: l3Assignee.empId,
+      previousStatus: prevStatus,
+      currentStatus: "Open",
+      createdAt: now
+    });
+
+    // Notify new assignee (L3)
+    const notif = await Notification.create({
+      id: crypto.randomUUID(),
+      empId: l3Assignee.empId,
+      title: "Ticket reopened",
+      description: `${ticketId} has been reopened and assigned to you`,
+      ticketId,
+      read: false,
+      createdAt: now
+    });
+    sendSocketNotification(l3Assignee.empId, notif.toObject());
+
+    // Write AuditLog
+    await AuditLog.create({
+      id: crypto.randomUUID(),
+      empId: performer.empId,
+      empName: performer.name,
+      role: performer.role,
+      action: "Status Change",
+      context: ticketId,
+      createdAt: now
+    });
+
+    return res.json(ticket);
+  } catch (error: any) {
+    console.error("Reopen ticket error:", error);
     return res.status(500).json({ message: error.message || "Internal server error" });
   }
 }

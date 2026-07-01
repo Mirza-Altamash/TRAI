@@ -96,3 +96,8 @@ export async function listAssigneeTicketsSplit(
 export async function deleteTicket(ticketId: string): Promise<void> {
   await apiClient.delete(`/tickets/${ticketId}`);
 }
+
+export async function reopenTicket(ticketId: string, comment: string): Promise<Ticket> {
+  const res = await apiClient.post<Ticket>(`/tickets/${ticketId}/reopen`, { comment });
+  return res.data;
+}
