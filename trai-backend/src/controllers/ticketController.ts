@@ -1,5 +1,7 @@
 import { Response } from "express";
 import crypto from "crypto";
+import PDFDocument from "pdfkit";
+import * as XLSX from "xlsx";
 import { Ticket, IAttachment } from "../models/Ticket";
 import { Employee } from "../models/Employee";
 import { TrailLog } from "../models/TrailLog";
@@ -132,42 +134,89 @@ export async function createTicket(req: AuthenticatedRequest, res: Response) {
   }
 }
 
+export function buildTicketMongoQuery(reqQuery: any, loggedInUser: any) {
+  const {
+    search,
+    division,
+    priority,
+    type,
+    status,
+    assignee,
+    createdBy,
+    createdFrom,
+    createdTo,
+    updatedFrom,
+    updatedTo
+  } = reqQuery;
+
+  const query: any = {};
+
+  // Search matches ticketId, summary, creator, assignee, division, type, status
+  if (search) {
+    const searchRegex = new RegExp(search as string, "i");
+    query.$or = [
+      { ticketId: searchRegex },
+      { summary: searchRegex },
+      { createdByName: searchRegex },
+      { currentAssigneeName: searchRegex },
+      { division: searchRegex },
+      { type: searchRegex },
+      { currentStatus: searchRegex }
+    ];
+  }
+
+  if (division) query.division = division;
+  if (priority) query.priority = priority;
+  if (type) query.type = type;
+  
+  if (status) {
+    if (status === "Assigned") {
+      query.currentStatus = "Open";
+      query.currentAssigneeRole = { $in: ["L2", "L3"] };
+    } else {
+      query.currentStatus = status;
+    }
+  }
+  
+  if (assignee) query.currentAssignee = assignee;
+  if (createdBy) query.createdBy = createdBy;
+
+  // Date range filters
+  if (createdFrom || createdTo) {
+    query.createdAt = {};
+    if (createdFrom) query.createdAt.$gte = new Date(createdFrom as string);
+    if (createdTo) {
+      const toDate = new Date(createdTo as string);
+      toDate.setHours(23, 59, 59, 999);
+      query.createdAt.$lte = toDate;
+    }
+  }
+
+  if (updatedFrom || updatedTo) {
+    query.updatedAt = {};
+    if (updatedFrom) query.updatedAt.$gte = new Date(updatedFrom as string);
+    if (updatedTo) {
+      const toDate = new Date(updatedTo as string);
+      toDate.setHours(23, 59, 59, 999);
+      query.updatedAt.$lte = toDate;
+    }
+  }
+
+  // Enforce role permission guards
+  if (loggedInUser && loggedInUser.role === "USER") {
+    query.createdBy = loggedInUser.empId;
+  }
+
+  return query;
+}
+
 export async function listTickets(req: AuthenticatedRequest, res: Response) {
   try {
-    const { search, division, priority, status, assignee, createdBy, page = 1, pageSize = 10 } = req.query;
-
+    const { page = 1, pageSize = 10 } = req.query;
     const p = parseInt(page as string, 10);
     const size = parseInt(pageSize as string, 10);
 
-    const query: any = {};
-
-    // Search matches ticketId or summary
-    if (search) {
-      const searchRegex = new RegExp(search as string, "i");
-      query.$or = [
-        { ticketId: searchRegex },
-        { summary: searchRegex }
-      ];
-    }
-
-    if (division) query.division = division;
-    if (priority) query.priority = priority;
-    if (status) {
-      if (status === "Assigned") {
-        query.currentStatus = "Open";
-        query.currentAssigneeRole = { $in: ["L2", "L3"] };
-      } else {
-        query.currentStatus = status;
-      }
-    }
-    if (assignee) query.currentAssignee = assignee;
-    if (createdBy) query.createdBy = createdBy;
-
-    // Enforce role permission guards
-    if (req.user && req.user.role === "USER") {
-      // Regular users can only see tickets they raised
-      query.createdBy = req.user.empId;
-    }
+    const query = buildTicketMongoQuery(req.query, req.user);
 
     const total = await Ticket.countDocuments(query);
     const tickets = await Ticket.find(query)
@@ -184,6 +233,184 @@ export async function listTickets(req: AuthenticatedRequest, res: Response) {
   } catch (error: any) {
     console.error("List tickets error:", error);
     return res.status(500).json({ message: error.message || "Internal server error" });
+  }
+}
+
+export async function exportExcelController(req: AuthenticatedRequest, res: Response) {
+  try {
+    const query = buildTicketMongoQuery(req.query, req.user);
+    const tickets = await Ticket.find(query).sort({ createdAt: -1 });
+
+    const headers = [
+      "Ticket ID",
+      "Ticket Title / Subject",
+      "Category / Department",
+      "Current Status",
+      "Assigned To",
+      "Created Date & Time",
+      "Resolved Date & Time",
+      "Closed Date & Time",
+      "Last Updated Date & Time"
+    ];
+
+    const dataRows = tickets.map((t) => {
+      const formatTime = (d?: Date) => {
+        if (!d) return "—";
+        const dateObj = new Date(d);
+        return dateObj.toLocaleDateString("en-IN") + " " + dateObj.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
+      };
+      return [
+        t.ticketId,
+        t.summary,
+        `${t.division} / ${t.type}`,
+        t.currentStatus,
+        t.currentAssigneeName,
+        formatTime(t.createdAt),
+        formatTime(t.resolvedAt),
+        formatTime(t.closedAt),
+        formatTime(t.updatedAt)
+      ];
+    });
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...dataRows]);
+
+    // Calculate column widths dynamically
+    ws["!cols"] = headers.map((h, colIndex) => {
+      let maxLen = h.length;
+      for (const row of dataRows) {
+        const val = row[colIndex];
+        if (val !== undefined && val !== null) {
+          const len = String(val).length;
+          if (len > maxLen) maxLen = len;
+        }
+      }
+      return { wch: Math.min(Math.max(maxLen + 3, 12), 60) };
+    });
+
+    XLSX.utils.book_append_sheet(wb, ws, "My Tickets");
+
+    const buffer = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
+
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.setHeader("Content-Disposition", `attachment; filename="my-tickets-export-${Date.now()}.xlsx"`);
+    return res.send(buffer);
+  } catch (error: any) {
+    console.error("Export Excel error:", error);
+    return res.status(500).json({ message: error.message || "Internal server error" });
+  }
+}
+
+export async function exportPdfController(req: AuthenticatedRequest, res: Response) {
+  try {
+    const query = buildTicketMongoQuery(req.query, req.user);
+    const tickets = await Ticket.find(query).sort({ createdAt: -1 });
+
+    const doc = new PDFDocument({
+      size: "A4",
+      layout: "landscape",
+      margin: 30
+    });
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename="my-tickets-export-${Date.now()}.pdf"`);
+    doc.pipe(res);
+
+    // Title
+    doc.fontSize(16).font("Helvetica-Bold").text("TRAI Complaint & Workflow Management Portal", 30, 30);
+    doc.fontSize(12).font("Helvetica").text("My Tickets Export Summary", 30, 50);
+    doc.fontSize(9).fillColor("#475569").text(`Generated By User: ${req.user?.empId} | Date: ${new Date().toLocaleString()}`, 30, 65);
+    
+    // Draw header border line
+    doc.moveTo(30, 80).lineTo(811.89, 80).strokeColor("#cbd5e1").stroke();
+
+    const startY = 95;
+    let currentY = startY;
+
+    // Table Headers
+    const headers = [
+      { name: "Ticket ID", width: 90 },
+      { name: "Subject/Title", width: 160 },
+      { name: "Category/Dept", width: 110 },
+      { name: "Status", width: 60 },
+      { name: "Assigned To", width: 100 },
+      { name: "Created Date", width: 100 },
+      { name: "Resolved Date", width: 80 },
+      { name: "Closed Date", width: 80 }
+    ];
+
+    // Render Headers
+    doc.font("Helvetica-Bold").fontSize(9).fillColor("#0f172a");
+    let currentX = 30;
+    for (const h of headers) {
+      doc.text(h.name, currentX, currentY, { width: h.width - 5 });
+      currentX += h.width;
+    }
+    
+    currentY += 15;
+    doc.moveTo(30, currentY).lineTo(811.89, currentY).strokeColor("#94a3b8").stroke();
+    currentY += 5;
+
+    // Render Rows
+    doc.font("Helvetica").fontSize(8).fillColor("#334155");
+    for (const t of tickets) {
+      if (currentY > 520) {
+        doc.addPage();
+        currentY = 30;
+        // Re-render Headers on new page
+        doc.font("Helvetica-Bold").fontSize(9).fillColor("#0f172a");
+        let tempX = 30;
+        for (const h of headers) {
+          doc.text(h.name, tempX, currentY, { width: h.width - 5 });
+          tempX += h.width;
+        }
+        currentY += 15;
+        doc.moveTo(30, currentY).lineTo(811.89, currentY).strokeColor("#94a3b8").stroke();
+        currentY += 5;
+        doc.font("Helvetica").fontSize(8).fillColor("#334155");
+      }
+
+      const formatTime = (d?: Date) => {
+        if (!d) return "—";
+        const dateObj = new Date(d);
+        return dateObj.toLocaleDateString("en-IN") + " " + dateObj.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
+      };
+
+      const rowData = [
+        t.ticketId,
+        t.summary,
+        `${t.division} / ${t.type}`,
+        t.currentStatus,
+        t.currentAssigneeName,
+        formatTime(t.createdAt),
+        formatTime(t.resolvedAt),
+        formatTime(t.closedAt)
+      ];
+
+      let tempX = 30;
+      let maxHeight = 10;
+      
+      const titleHeight = doc.heightOfString(t.summary, { width: 160 - 5 });
+      if (titleHeight > maxHeight) maxHeight = titleHeight;
+
+      for (let idx = 0; idx < rowData.length; idx++) {
+        const textVal = rowData[idx];
+        const colWidth = headers[idx].width;
+        doc.text(textVal, tempX, currentY, { width: colWidth - 5 });
+        tempX += colWidth;
+      }
+
+      currentY += maxHeight + 6;
+      doc.moveTo(30, currentY).lineTo(811.89, currentY).strokeColor("#f1f5f9").stroke();
+      currentY += 4;
+    }
+
+    doc.end();
+  } catch (error: any) {
+    console.error("Export PDF error:", error);
+    if (!res.headersSent) {
+      return res.status(500).json({ message: error.message || "Internal server error" });
+    }
   }
 }
 
@@ -230,6 +457,20 @@ export async function addComment(req: AuthenticatedRequest, res: Response) {
 
     const now = new Date();
 
+    const attachments: any[] = [];
+    if (req.files && Array.isArray(req.files)) {
+      for (const file of req.files) {
+        attachments.push({
+          filename: file.originalname,
+          url: `/uploads/trail-attachments/${file.filename}`,
+          mimeType: file.mimetype,
+          size: file.size,
+          uploadedAt: now,
+          uploadedBy: performer.empId
+        });
+      }
+    }
+
     // Create TrailLog
     const log = await TrailLog.create({
       id: crypto.randomUUID(),
@@ -240,6 +481,7 @@ export async function addComment(req: AuthenticatedRequest, res: Response) {
       performedByName: performer.name,
       performerRole: performer.role,
       currentStatus: ticket.currentStatus,
+      attachments,
       createdAt: now
     });
 
@@ -325,6 +567,20 @@ export async function reassignTicket(req: AuthenticatedRequest, res: Response) {
     const prevStatus = ticket.currentStatus;
     const now = new Date();
 
+    const attachments: any[] = [];
+    if (req.files && Array.isArray(req.files)) {
+      for (const file of req.files) {
+        attachments.push({
+          filename: file.originalname,
+          url: `/uploads/trail-attachments/${file.filename}`,
+          mimeType: file.mimetype,
+          size: file.size,
+          uploadedAt: now,
+          uploadedBy: performer.empId
+        });
+      }
+    }
+
     // Update ticket assignee and ensure status is Open
     ticket.currentAssignee = assignee.empId;
     ticket.currentAssigneeName = assignee.name;
@@ -351,6 +607,7 @@ export async function reassignTicket(req: AuthenticatedRequest, res: Response) {
       toAssignee: assignee.empId,
       previousStatus: prevStatus,
       currentStatus: "Open",
+      attachments,
       createdAt: now
     });
 
@@ -420,6 +677,20 @@ export async function updateStatus(req: AuthenticatedRequest, res: Response) {
     const prevStatus = ticket.currentStatus;
     const now = new Date();
 
+    const attachments: any[] = [];
+    if (req.files && Array.isArray(req.files)) {
+      for (const file of req.files) {
+        attachments.push({
+          filename: file.originalname,
+          url: `/uploads/trail-attachments/${file.filename}`,
+          mimeType: file.mimetype,
+          size: file.size,
+          uploadedAt: now,
+          uploadedBy: performer.empId
+        });
+      }
+    }
+
     if (status === "Resolved") {
       if (prevStatus !== "Open") {
         return res.status(400).json({ message: "Only Open tickets can be marked as Resolved" });
@@ -452,6 +723,7 @@ export async function updateStatus(req: AuthenticatedRequest, res: Response) {
         toAssignee: creator.empId,
         previousStatus: prevStatus,
         currentStatus: "Resolved",
+        attachments,
         createdAt: now
       });
 
@@ -482,6 +754,7 @@ export async function updateStatus(req: AuthenticatedRequest, res: Response) {
           performerRole: performer.role,
           previousStatus: prevStatus,
           currentStatus: "Closed",
+          attachments,
           createdAt: now
         });
 
@@ -509,6 +782,7 @@ export async function updateStatus(req: AuthenticatedRequest, res: Response) {
           performerRole: performer.role,
           previousStatus: prevStatus,
           currentStatus: "Closed",
+          attachments,
           createdAt: now
         });
       }
@@ -691,6 +965,20 @@ export async function reopenTicket(req: AuthenticatedRequest, res: Response) {
       return res.status(400).json({ message: "Cannot reopen ticket after 30 days of resolution" });
     }
 
+    const attachments: any[] = [];
+    if (req.files && Array.isArray(req.files)) {
+      for (const file of req.files) {
+        attachments.push({
+          filename: file.originalname,
+          url: `/uploads/trail-attachments/${file.filename}`,
+          mimeType: file.mimetype,
+          size: file.size,
+          uploadedAt: now,
+          uploadedBy: performer.empId
+        });
+      }
+    }
+
     // Find the previous/assigned L3 member
     const assignedL3 = await getAssignedL3ForTicket(ticket);
     if (!assignedL3) {
@@ -725,6 +1013,7 @@ export async function reopenTicket(req: AuthenticatedRequest, res: Response) {
       toAssignee: l3Assignee.empId,
       previousStatus: prevStatus,
       currentStatus: "Open",
+      attachments,
       createdAt: now
     });
 

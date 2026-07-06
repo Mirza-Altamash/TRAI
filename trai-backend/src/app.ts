@@ -21,6 +21,9 @@ app.use(express.urlencoded({ extended: true }));
 // Serve uploaded ticket attachments
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
+import { authenticateToken } from "./middleware/authMiddleware";
+import { exportExcelController, exportPdfController } from "./controllers/ticketController";
+
 // Register routers
 app.use("/api/auth", authRoutes);
 app.use("/api/employees", employeeRoutes);
@@ -28,6 +31,9 @@ app.use("/api/tickets", ticketRoutes);
 app.use("/api/trail", trailRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api", reportRoutes);
+
+app.get("/api/user/my-tickets/export/excel", authenticateToken, exportExcelController);
+app.get("/api/user/my-tickets/export/pdf", authenticateToken, exportPdfController);
 
 // API health endpoint
 app.get("/api/health", (req: Request, res: Response) => {

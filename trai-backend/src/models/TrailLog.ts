@@ -14,6 +14,14 @@ export interface ITrailLog extends Document {
   previousStatus?: "Open" | "Resolved" | "Closed";
   currentStatus?: "Open" | "Resolved" | "Closed";
   attachment?: IAttachment;
+  attachments?: {
+    filename: string;
+    url: string;
+    mimeType: string;
+    size: number;
+    uploadedAt: Date;
+    uploadedBy: string;
+  }[];
   createdAt: Date;
 }
 
@@ -38,6 +46,14 @@ const TrailLogSchema = new Schema<ITrailLog>({
     sizeKb: Number,
     uploadedAt: Date
   },
+  attachments: [{
+    filename: String,
+    url: String,
+    mimeType: String,
+    size: Number,
+    uploadedAt: { type: Date, default: Date.now },
+    uploadedBy: String
+  }],
   createdAt: { type: Date, default: Date.now }
 });
 

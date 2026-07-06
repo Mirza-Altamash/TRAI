@@ -8,20 +8,34 @@ if (!fs.existsSync(uploadPath)) {
   fs.mkdirSync(uploadPath, { recursive: true });
 }
 
+// Ensure trail upload directory exists
+const trailUploadPath = path.join(__dirname, "../../uploads/trail-attachments");
+if (!fs.existsSync(trailUploadPath)) {
+  fs.mkdirSync(trailUploadPath, { recursive: true });
+}
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, uploadPath);
   },
   filename: (req, file, cb) => {
-    // Generate a unique filename: timestamp + random number + extension
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
     const ext = path.extname(file.originalname);
     cb(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
   }
 });
 
-// Create multer upload instance
-// Replace lines 19-24 in trai-backend/src/middleware/uploadMiddleware.ts with:
+const trailStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, trailUploadPath);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    const ext = path.extname(file.originalname);
+    cb(null, `trail-${uniqueSuffix}${ext}`);
+  }
+});
+
 export const upload = multer({
   storage,
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
@@ -33,6 +47,21 @@ export const upload = multer({
       cb(null, true);
     } else {
       cb(new Error("Unsupported file type. Only standard documents/images are allowed."));
+    }
+  }
+});
+
+export const trailUpload = multer({
+  storage: trailStorage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  fileFilter: (req, file, cb) => {
+    // PDF, DOC, DOCX, TXT, XLS, XLSX, PPT, PPTX, PNG, JPG, JPEG, ZIP, RAR
+    const allowedExtensions = /jpeg|jpg|png|pdf|doc|docx|xls|xlsx|txt|zip|rar|ppt|pptx/;
+    const extname = allowedExtensions.test(path.extname(file.originalname).toLowerCase());
+    if (extname) {
+      cb(null, true);
+    } else {
+      cb(new Error("Unsupported file type."));
     }
   }
 });

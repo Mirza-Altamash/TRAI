@@ -291,7 +291,7 @@ export async function getMisReport(req: AuthenticatedRequest, res: Response) {
 
 export async function listAuditLogs(req: AuthenticatedRequest, res: Response) {
   try {
-    const { action, empId, from, to, page = 1, pageSize = 15 } = req.query;
+    const { action, empId, search, from, to, page = 1, pageSize = 15 } = req.query;
 
     const p = parseInt(page as string, 10);
     const size = parseInt(pageSize as string, 10);
@@ -299,7 +299,21 @@ export async function listAuditLogs(req: AuthenticatedRequest, res: Response) {
     const query: any = {};
 
     if (action) query.action = action;
-    if (empId) query.empId = empId;
+    if (empId) {
+      const empIdRegex = new RegExp(empId as string, "i");
+      query.empId = empIdRegex;
+    }
+
+    if (search) {
+      const searchRegex = new RegExp(search as string, "i");
+      query.$or = [
+        { empId: searchRegex },
+        { empName: searchRegex },
+        { role: searchRegex },
+        { action: searchRegex },
+        { context: searchRegex }
+      ];
+    }
 
     if (from || to) {
       query.createdAt = {};
