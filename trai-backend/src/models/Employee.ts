@@ -6,7 +6,7 @@ export interface IEmployee extends Document {
   email: string;
   passwordHash: string;
   role: "ADMIN" | "USER" | "L2" | "L3";
-  subRole: "Developer" | "Infra" | "Network" | "SRO" | "J.Adv" | "D.Adv" | "Adv" | null;
+  subRole: "Developer" | "Infra" | "Network" | "Support" | "SRO" | "J.Adv" | "D.Adv" | "Adv" | "TO" | "SO" | "Assistant" | null;
   division: "IT" | "NSL" | "QoS" | "B&CS" | "F&EA" | "ALL";
   designation: string;
   floor: string;

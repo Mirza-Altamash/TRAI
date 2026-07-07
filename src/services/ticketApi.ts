@@ -5,9 +5,14 @@ export interface TicketQuery {
   search?: string;
   division?: string;
   priority?: string;
-  status?: TicketStatus;
+  type?: string;
+  status?: TicketStatus | "Assigned";
   assignee?: string;
   createdBy?: string;
+  createdFrom?: string;
+  createdTo?: string;
+  updatedFrom?: string;
+  updatedTo?: string;
   page?: number;
   pageSize?: number;
 }
@@ -55,30 +60,59 @@ export async function createTicket(
     }
   }
 
-  const res = await apiClient.post<Ticket>("/tickets", fd, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+  const res = await apiClient.post<Ticket>("/tickets", fd);
   return res.data;
 }
 
-export async function addComment(ticketId: string, comment: string): Promise<any> {
-  const res = await apiClient.post(`/tickets/${ticketId}/comments`, { comment });
+export async function addComment(
+  ticketId: string,
+  comment: string,
+  files?: FileList | File[] | null
+): Promise<any> {
+  const fd = new FormData();
+  fd.append("comment", comment);
+  if (files) {
+    for (let i = 0; i < files.length; i++) {
+      fd.append("attachments", files[i]);
+    }
+  }
+  const res = await apiClient.post(`/tickets/${ticketId}/comments`, fd);
   return res.data;
 }
 
-export async function reassignTicket(ticketId: string, toEmpId: string, comment: string): Promise<Ticket> {
-  const res = await apiClient.post<Ticket>(`/tickets/${ticketId}/reassign`, { toEmpId, comment });
+export async function reassignTicket(
+  ticketId: string,
+  toEmpId: string,
+  comment: string,
+  files?: FileList | File[] | null
+): Promise<Ticket> {
+  const fd = new FormData();
+  fd.append("toEmpId", toEmpId);
+  fd.append("comment", comment);
+  if (files) {
+    for (let i = 0; i < files.length; i++) {
+      fd.append("attachments", files[i]);
+    }
+  }
+  const res = await apiClient.post<Ticket>(`/tickets/${ticketId}/reassign`, fd);
   return res.data;
 }
 
 export async function updateStatus(
   ticketId: string,
   status: TicketStatus,
-  byOrComment?: any,
-  commentText?: string
+  comment: string,
+  files?: FileList | File[] | null
 ): Promise<Ticket> {
-  const actualComment = typeof byOrComment === "string" ? byOrComment : commentText;
-  const res = await apiClient.put<Ticket>(`/tickets/${ticketId}/status`, { status, comment: actualComment });
+  const fd = new FormData();
+  fd.append("status", status);
+  fd.append("comment", comment);
+  if (files) {
+    for (let i = 0; i < files.length; i++) {
+      fd.append("attachments", files[i]);
+    }
+  }
+  const res = await apiClient.put<Ticket>(`/tickets/${ticketId}/status`, fd);
   return res.data;
 }
 
@@ -97,7 +131,18 @@ export async function deleteTicket(ticketId: string): Promise<void> {
   await apiClient.delete(`/tickets/${ticketId}`);
 }
 
-export async function reopenTicket(ticketId: string, comment: string): Promise<Ticket> {
-  const res = await apiClient.post<Ticket>(`/tickets/${ticketId}/reopen`, { comment });
+export async function reopenTicket(
+  ticketId: string,
+  comment: string,
+  files?: FileList | File[] | null
+): Promise<Ticket> {
+  const fd = new FormData();
+  fd.append("comment", comment);
+  if (files) {
+    for (let i = 0; i < files.length; i++) {
+      fd.append("attachments", files[i]);
+    }
+  }
+  const res = await apiClient.post<Ticket>(`/tickets/${ticketId}/reopen`, fd);
   return res.data;
 }

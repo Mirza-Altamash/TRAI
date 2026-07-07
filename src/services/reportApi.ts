@@ -11,8 +11,8 @@ export async function getUserMetrics(empId: string) {
   return res.data;
 }
 
-export async function getAssigneeMetrics(empId: string) {
-  const res = await apiClient.get("/analytics/assignee", { params: { empId } });
+export async function getAssigneeMetrics(empId: string, kind?: "assigned" | "created") {
+  const res = await apiClient.get("/analytics/assignee", { params: { empId, kind } });
   return res.data;
 }
 

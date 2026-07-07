@@ -4,9 +4,10 @@ import { MetricCard } from "@/components/common/MetricCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TicketTable } from "@/components/common/TicketTable";
 import { Button } from "@/components/ui/button";
+import { Link } from "@tanstack/react-router";
 import { useCurrentUser } from "@/lib/auth";
 import { getAssigneeMetrics, listTickets } from "@/services/mock";
-import { Activity, Clock, CheckCircle2, XCircle } from "lucide-react";
+import { Activity, Clock, CheckCircle2, XCircle, PlusCircle } from "lucide-react";
 import { useState } from "react";
 import type { TicketStatus } from "@/types";
 
@@ -24,9 +25,23 @@ export function AssigneeDashboard({ label }: { label: "L2" | "L3" }) {
     setStatusFilter(prev => prev === status ? null : status);
   };
 
+  const showRaiseTicket = label === "L3";
+
   return (
     <div className="space-y-6">
-      <PageHeader title={`${label} Dashboard`} subtitle="Tickets assigned to you." />
+      <PageHeader
+        title={`${label} Dashboard`}
+        subtitle="Tickets assigned to you."
+        actions={
+          showRaiseTicket ? (
+            <Button asChild>
+              <Link to="/admin/tickets/new">
+                <PlusCircle className="mr-1.5 h-4 w-4" /> Raise Ticket
+              </Link>
+            </Button>
+          ) : undefined
+        }
+      />
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <MetricCard label="Assigned" value={m?.assigned ?? "—"} icon={Activity} accent="primary" onClick={() => setStatusFilter(null)} hint={statusFilter === null ? "Showing all" : "Click to clear filter"} />
         <MetricCard label="Open" value={m?.open ?? "—"} icon={Clock} accent="info" onClick={() => toggleFilter("Open")} hint={statusFilter === "Open" ? "Filter active" : undefined} />

@@ -16,11 +16,14 @@ import { Route as AppUserProfileRouteImport } from './routes/_app.user.profile'
 import { Route as AppUserDashboardRouteImport } from './routes/_app.user.dashboard'
 import { Route as AppTicketsTicketIdRouteImport } from './routes/_app.tickets.$ticketId'
 import { Route as AppL3TicketsRouteImport } from './routes/_app.l3.tickets'
+import { Route as AppL3RaisedRouteImport } from './routes/_app.l3.raised'
 import { Route as AppL3ProfileRouteImport } from './routes/_app.l3.profile'
 import { Route as AppL3DashboardRouteImport } from './routes/_app.l3.dashboard'
-import { Route as AppL2TicketsRouteImport } from './routes/_app.l2.tickets'
+import { Route as AppL3AssignmentsRouteImport } from './routes/_app.l3.assignments'
+import { Route as AppL2RaisedRouteImport } from './routes/_app.l2.raised'
 import { Route as AppL2ProfileRouteImport } from './routes/_app.l2.profile'
 import { Route as AppL2DashboardRouteImport } from './routes/_app.l2.dashboard'
+import { Route as AppL2AssignmentsRouteImport } from './routes/_app.l2.assignments'
 import { Route as AppAdminTotalticketRouteImport } from './routes/_app.admin.totalticket'
 import { Route as AppAdminSlaRouteImport } from './routes/_app.admin.sla'
 import { Route as AppAdminReportsRouteImport } from './routes/_app.admin.reports'
@@ -30,8 +33,11 @@ import { Route as AppAdminDashboardRouteImport } from './routes/_app.admin.dashb
 import { Route as AppAdminAuditRouteImport } from './routes/_app.admin.audit'
 import { Route as AppAdminAnalyticsRouteImport } from './routes/_app.admin.analytics'
 import { Route as AppUserTicketsIndexRouteImport } from './routes/_app.user.tickets.index'
+import { Route as AppL2TicketsIndexRouteImport } from './routes/_app.l2.tickets.index'
 import { Route as AppAdminEmployeesIndexRouteImport } from './routes/_app.admin.employees.index'
 import { Route as AppUserTicketsNewRouteImport } from './routes/_app.user.tickets.new'
+import { Route as AppL2TicketsNewRouteImport } from './routes/_app.l2.tickets.new'
+import { Route as AppAdminTicketsNewRouteImport } from './routes/_app.admin.tickets.new'
 import { Route as AppAdminEmployeesCreateRouteImport } from './routes/_app.admin.employees.create'
 import { Route as AppAdminEmployeesEmpIdEditRouteImport } from './routes/_app.admin.employees.$empId.edit'
 
@@ -69,6 +75,11 @@ const AppL3TicketsRoute = AppL3TicketsRouteImport.update({
   path: '/l3/tickets',
   getParentRoute: () => AppRoute,
 } as any)
+const AppL3RaisedRoute = AppL3RaisedRouteImport.update({
+  id: '/l3/raised',
+  path: '/l3/raised',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppL3ProfileRoute = AppL3ProfileRouteImport.update({
   id: '/l3/profile',
   path: '/l3/profile',
@@ -79,9 +90,14 @@ const AppL3DashboardRoute = AppL3DashboardRouteImport.update({
   path: '/l3/dashboard',
   getParentRoute: () => AppRoute,
 } as any)
-const AppL2TicketsRoute = AppL2TicketsRouteImport.update({
-  id: '/l2/tickets',
-  path: '/l2/tickets',
+const AppL3AssignmentsRoute = AppL3AssignmentsRouteImport.update({
+  id: '/l3/assignments',
+  path: '/l3/assignments',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppL2RaisedRoute = AppL2RaisedRouteImport.update({
+  id: '/l2/raised',
+  path: '/l2/raised',
   getParentRoute: () => AppRoute,
 } as any)
 const AppL2ProfileRoute = AppL2ProfileRouteImport.update({
@@ -92,6 +108,11 @@ const AppL2ProfileRoute = AppL2ProfileRouteImport.update({
 const AppL2DashboardRoute = AppL2DashboardRouteImport.update({
   id: '/l2/dashboard',
   path: '/l2/dashboard',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppL2AssignmentsRoute = AppL2AssignmentsRouteImport.update({
+  id: '/l2/assignments',
+  path: '/l2/assignments',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAdminTotalticketRoute = AppAdminTotalticketRouteImport.update({
@@ -139,6 +160,11 @@ const AppUserTicketsIndexRoute = AppUserTicketsIndexRouteImport.update({
   path: '/user/tickets/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppL2TicketsIndexRoute = AppL2TicketsIndexRouteImport.update({
+  id: '/l2/tickets/',
+  path: '/l2/tickets/',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAdminEmployeesIndexRoute = AppAdminEmployeesIndexRouteImport.update({
   id: '/admin/employees/',
   path: '/admin/employees/',
@@ -147,6 +173,16 @@ const AppAdminEmployeesIndexRoute = AppAdminEmployeesIndexRouteImport.update({
 const AppUserTicketsNewRoute = AppUserTicketsNewRouteImport.update({
   id: '/user/tickets/new',
   path: '/user/tickets/new',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppL2TicketsNewRoute = AppL2TicketsNewRouteImport.update({
+  id: '/l2/tickets/new',
+  path: '/l2/tickets/new',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAdminTicketsNewRoute = AppAdminTicketsNewRouteImport.update({
+  id: '/admin/tickets/new',
+  path: '/admin/tickets/new',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAdminEmployeesCreateRoute = AppAdminEmployeesCreateRouteImport.update({
@@ -172,18 +208,24 @@ export interface FileRoutesByFullPath {
   '/admin/reports': typeof AppAdminReportsRoute
   '/admin/sla': typeof AppAdminSlaRoute
   '/admin/totalticket': typeof AppAdminTotalticketRoute
+  '/l2/assignments': typeof AppL2AssignmentsRoute
   '/l2/dashboard': typeof AppL2DashboardRoute
   '/l2/profile': typeof AppL2ProfileRoute
-  '/l2/tickets': typeof AppL2TicketsRoute
+  '/l2/raised': typeof AppL2RaisedRoute
+  '/l3/assignments': typeof AppL3AssignmentsRoute
   '/l3/dashboard': typeof AppL3DashboardRoute
   '/l3/profile': typeof AppL3ProfileRoute
+  '/l3/raised': typeof AppL3RaisedRoute
   '/l3/tickets': typeof AppL3TicketsRoute
   '/tickets/$ticketId': typeof AppTicketsTicketIdRoute
   '/user/dashboard': typeof AppUserDashboardRoute
   '/user/profile': typeof AppUserProfileRoute
   '/admin/employees/create': typeof AppAdminEmployeesCreateRoute
+  '/admin/tickets/new': typeof AppAdminTicketsNewRoute
+  '/l2/tickets/new': typeof AppL2TicketsNewRoute
   '/user/tickets/new': typeof AppUserTicketsNewRoute
   '/admin/employees/': typeof AppAdminEmployeesIndexRoute
+  '/l2/tickets/': typeof AppL2TicketsIndexRoute
   '/user/tickets/': typeof AppUserTicketsIndexRoute
   '/admin/employees/$empId/edit': typeof AppAdminEmployeesEmpIdEditRoute
 }
@@ -198,18 +240,24 @@ export interface FileRoutesByTo {
   '/admin/reports': typeof AppAdminReportsRoute
   '/admin/sla': typeof AppAdminSlaRoute
   '/admin/totalticket': typeof AppAdminTotalticketRoute
+  '/l2/assignments': typeof AppL2AssignmentsRoute
   '/l2/dashboard': typeof AppL2DashboardRoute
   '/l2/profile': typeof AppL2ProfileRoute
-  '/l2/tickets': typeof AppL2TicketsRoute
+  '/l2/raised': typeof AppL2RaisedRoute
+  '/l3/assignments': typeof AppL3AssignmentsRoute
   '/l3/dashboard': typeof AppL3DashboardRoute
   '/l3/profile': typeof AppL3ProfileRoute
+  '/l3/raised': typeof AppL3RaisedRoute
   '/l3/tickets': typeof AppL3TicketsRoute
   '/tickets/$ticketId': typeof AppTicketsTicketIdRoute
   '/user/dashboard': typeof AppUserDashboardRoute
   '/user/profile': typeof AppUserProfileRoute
   '/admin/employees/create': typeof AppAdminEmployeesCreateRoute
+  '/admin/tickets/new': typeof AppAdminTicketsNewRoute
+  '/l2/tickets/new': typeof AppL2TicketsNewRoute
   '/user/tickets/new': typeof AppUserTicketsNewRoute
   '/admin/employees': typeof AppAdminEmployeesIndexRoute
+  '/l2/tickets': typeof AppL2TicketsIndexRoute
   '/user/tickets': typeof AppUserTicketsIndexRoute
   '/admin/employees/$empId/edit': typeof AppAdminEmployeesEmpIdEditRoute
 }
@@ -226,18 +274,24 @@ export interface FileRoutesById {
   '/_app/admin/reports': typeof AppAdminReportsRoute
   '/_app/admin/sla': typeof AppAdminSlaRoute
   '/_app/admin/totalticket': typeof AppAdminTotalticketRoute
+  '/_app/l2/assignments': typeof AppL2AssignmentsRoute
   '/_app/l2/dashboard': typeof AppL2DashboardRoute
   '/_app/l2/profile': typeof AppL2ProfileRoute
-  '/_app/l2/tickets': typeof AppL2TicketsRoute
+  '/_app/l2/raised': typeof AppL2RaisedRoute
+  '/_app/l3/assignments': typeof AppL3AssignmentsRoute
   '/_app/l3/dashboard': typeof AppL3DashboardRoute
   '/_app/l3/profile': typeof AppL3ProfileRoute
+  '/_app/l3/raised': typeof AppL3RaisedRoute
   '/_app/l3/tickets': typeof AppL3TicketsRoute
   '/_app/tickets/$ticketId': typeof AppTicketsTicketIdRoute
   '/_app/user/dashboard': typeof AppUserDashboardRoute
   '/_app/user/profile': typeof AppUserProfileRoute
   '/_app/admin/employees/create': typeof AppAdminEmployeesCreateRoute
+  '/_app/admin/tickets/new': typeof AppAdminTicketsNewRoute
+  '/_app/l2/tickets/new': typeof AppL2TicketsNewRoute
   '/_app/user/tickets/new': typeof AppUserTicketsNewRoute
   '/_app/admin/employees/': typeof AppAdminEmployeesIndexRoute
+  '/_app/l2/tickets/': typeof AppL2TicketsIndexRoute
   '/_app/user/tickets/': typeof AppUserTicketsIndexRoute
   '/_app/admin/employees/$empId/edit': typeof AppAdminEmployeesEmpIdEditRoute
 }
@@ -254,18 +308,24 @@ export interface FileRouteTypes {
     | '/admin/reports'
     | '/admin/sla'
     | '/admin/totalticket'
+    | '/l2/assignments'
     | '/l2/dashboard'
     | '/l2/profile'
-    | '/l2/tickets'
+    | '/l2/raised'
+    | '/l3/assignments'
     | '/l3/dashboard'
     | '/l3/profile'
+    | '/l3/raised'
     | '/l3/tickets'
     | '/tickets/$ticketId'
     | '/user/dashboard'
     | '/user/profile'
     | '/admin/employees/create'
+    | '/admin/tickets/new'
+    | '/l2/tickets/new'
     | '/user/tickets/new'
     | '/admin/employees/'
+    | '/l2/tickets/'
     | '/user/tickets/'
     | '/admin/employees/$empId/edit'
   fileRoutesByTo: FileRoutesByTo
@@ -280,18 +340,24 @@ export interface FileRouteTypes {
     | '/admin/reports'
     | '/admin/sla'
     | '/admin/totalticket'
+    | '/l2/assignments'
     | '/l2/dashboard'
     | '/l2/profile'
-    | '/l2/tickets'
+    | '/l2/raised'
+    | '/l3/assignments'
     | '/l3/dashboard'
     | '/l3/profile'
+    | '/l3/raised'
     | '/l3/tickets'
     | '/tickets/$ticketId'
     | '/user/dashboard'
     | '/user/profile'
     | '/admin/employees/create'
+    | '/admin/tickets/new'
+    | '/l2/tickets/new'
     | '/user/tickets/new'
     | '/admin/employees'
+    | '/l2/tickets'
     | '/user/tickets'
     | '/admin/employees/$empId/edit'
   id:
@@ -307,18 +373,24 @@ export interface FileRouteTypes {
     | '/_app/admin/reports'
     | '/_app/admin/sla'
     | '/_app/admin/totalticket'
+    | '/_app/l2/assignments'
     | '/_app/l2/dashboard'
     | '/_app/l2/profile'
-    | '/_app/l2/tickets'
+    | '/_app/l2/raised'
+    | '/_app/l3/assignments'
     | '/_app/l3/dashboard'
     | '/_app/l3/profile'
+    | '/_app/l3/raised'
     | '/_app/l3/tickets'
     | '/_app/tickets/$ticketId'
     | '/_app/user/dashboard'
     | '/_app/user/profile'
     | '/_app/admin/employees/create'
+    | '/_app/admin/tickets/new'
+    | '/_app/l2/tickets/new'
     | '/_app/user/tickets/new'
     | '/_app/admin/employees/'
+    | '/_app/l2/tickets/'
     | '/_app/user/tickets/'
     | '/_app/admin/employees/$empId/edit'
   fileRoutesById: FileRoutesById
@@ -380,6 +452,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppL3TicketsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/l3/raised': {
+      id: '/_app/l3/raised'
+      path: '/l3/raised'
+      fullPath: '/l3/raised'
+      preLoaderRoute: typeof AppL3RaisedRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/l3/profile': {
       id: '/_app/l3/profile'
       path: '/l3/profile'
@@ -394,11 +473,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppL3DashboardRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/l2/tickets': {
-      id: '/_app/l2/tickets'
-      path: '/l2/tickets'
-      fullPath: '/l2/tickets'
-      preLoaderRoute: typeof AppL2TicketsRouteImport
+    '/_app/l3/assignments': {
+      id: '/_app/l3/assignments'
+      path: '/l3/assignments'
+      fullPath: '/l3/assignments'
+      preLoaderRoute: typeof AppL3AssignmentsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/l2/raised': {
+      id: '/_app/l2/raised'
+      path: '/l2/raised'
+      fullPath: '/l2/raised'
+      preLoaderRoute: typeof AppL2RaisedRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/l2/profile': {
@@ -413,6 +499,13 @@ declare module '@tanstack/react-router' {
       path: '/l2/dashboard'
       fullPath: '/l2/dashboard'
       preLoaderRoute: typeof AppL2DashboardRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/l2/assignments': {
+      id: '/_app/l2/assignments'
+      path: '/l2/assignments'
+      fullPath: '/l2/assignments'
+      preLoaderRoute: typeof AppL2AssignmentsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/admin/totalticket': {
@@ -478,6 +571,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppUserTicketsIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/l2/tickets/': {
+      id: '/_app/l2/tickets/'
+      path: '/l2/tickets'
+      fullPath: '/l2/tickets/'
+      preLoaderRoute: typeof AppL2TicketsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/admin/employees/': {
       id: '/_app/admin/employees/'
       path: '/admin/employees'
@@ -490,6 +590,20 @@ declare module '@tanstack/react-router' {
       path: '/user/tickets/new'
       fullPath: '/user/tickets/new'
       preLoaderRoute: typeof AppUserTicketsNewRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/l2/tickets/new': {
+      id: '/_app/l2/tickets/new'
+      path: '/l2/tickets/new'
+      fullPath: '/l2/tickets/new'
+      preLoaderRoute: typeof AppL2TicketsNewRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/admin/tickets/new': {
+      id: '/_app/admin/tickets/new'
+      path: '/admin/tickets/new'
+      fullPath: '/admin/tickets/new'
+      preLoaderRoute: typeof AppAdminTicketsNewRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/admin/employees/create': {
@@ -518,18 +632,24 @@ interface AppRouteChildren {
   AppAdminReportsRoute: typeof AppAdminReportsRoute
   AppAdminSlaRoute: typeof AppAdminSlaRoute
   AppAdminTotalticketRoute: typeof AppAdminTotalticketRoute
+  AppL2AssignmentsRoute: typeof AppL2AssignmentsRoute
   AppL2DashboardRoute: typeof AppL2DashboardRoute
   AppL2ProfileRoute: typeof AppL2ProfileRoute
-  AppL2TicketsRoute: typeof AppL2TicketsRoute
+  AppL2RaisedRoute: typeof AppL2RaisedRoute
+  AppL3AssignmentsRoute: typeof AppL3AssignmentsRoute
   AppL3DashboardRoute: typeof AppL3DashboardRoute
   AppL3ProfileRoute: typeof AppL3ProfileRoute
+  AppL3RaisedRoute: typeof AppL3RaisedRoute
   AppL3TicketsRoute: typeof AppL3TicketsRoute
   AppTicketsTicketIdRoute: typeof AppTicketsTicketIdRoute
   AppUserDashboardRoute: typeof AppUserDashboardRoute
   AppUserProfileRoute: typeof AppUserProfileRoute
   AppAdminEmployeesCreateRoute: typeof AppAdminEmployeesCreateRoute
+  AppAdminTicketsNewRoute: typeof AppAdminTicketsNewRoute
+  AppL2TicketsNewRoute: typeof AppL2TicketsNewRoute
   AppUserTicketsNewRoute: typeof AppUserTicketsNewRoute
   AppAdminEmployeesIndexRoute: typeof AppAdminEmployeesIndexRoute
+  AppL2TicketsIndexRoute: typeof AppL2TicketsIndexRoute
   AppUserTicketsIndexRoute: typeof AppUserTicketsIndexRoute
   AppAdminEmployeesEmpIdEditRoute: typeof AppAdminEmployeesEmpIdEditRoute
 }
@@ -543,18 +663,24 @@ const AppRouteChildren: AppRouteChildren = {
   AppAdminReportsRoute: AppAdminReportsRoute,
   AppAdminSlaRoute: AppAdminSlaRoute,
   AppAdminTotalticketRoute: AppAdminTotalticketRoute,
+  AppL2AssignmentsRoute: AppL2AssignmentsRoute,
   AppL2DashboardRoute: AppL2DashboardRoute,
   AppL2ProfileRoute: AppL2ProfileRoute,
-  AppL2TicketsRoute: AppL2TicketsRoute,
+  AppL2RaisedRoute: AppL2RaisedRoute,
+  AppL3AssignmentsRoute: AppL3AssignmentsRoute,
   AppL3DashboardRoute: AppL3DashboardRoute,
   AppL3ProfileRoute: AppL3ProfileRoute,
+  AppL3RaisedRoute: AppL3RaisedRoute,
   AppL3TicketsRoute: AppL3TicketsRoute,
   AppTicketsTicketIdRoute: AppTicketsTicketIdRoute,
   AppUserDashboardRoute: AppUserDashboardRoute,
   AppUserProfileRoute: AppUserProfileRoute,
   AppAdminEmployeesCreateRoute: AppAdminEmployeesCreateRoute,
+  AppAdminTicketsNewRoute: AppAdminTicketsNewRoute,
+  AppL2TicketsNewRoute: AppL2TicketsNewRoute,
   AppUserTicketsNewRoute: AppUserTicketsNewRoute,
   AppAdminEmployeesIndexRoute: AppAdminEmployeesIndexRoute,
+  AppL2TicketsIndexRoute: AppL2TicketsIndexRoute,
   AppUserTicketsIndexRoute: AppUserTicketsIndexRoute,
   AppAdminEmployeesEmpIdEditRoute: AppAdminEmployeesEmpIdEditRoute,
 }

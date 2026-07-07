@@ -52,11 +52,12 @@ function AdminTotalTickets() {
     }),
   });
 
-  const { data: trail = [], isLoading: trailLoading } = useQuery({
+  const { data: trailData, isLoading: trailLoading } = useQuery({
     queryKey: ["ticket", "trail", selectedTicketId],
     queryFn: () => listTrail(selectedTicketId!),
     enabled: !!selectedTicketId,
   });
+  const trail = trailData?.rows ?? [];
 
   const filtered = useMemo(() => {
     let rows = data?.rows ?? [];
@@ -85,12 +86,12 @@ function AdminTotalTickets() {
 
       <Card>
         <CardContent className="p-4">
-          <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-6">
-            <div className="space-y-1.5 lg:col-span-2">
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="flex-1 min-w-[240px] space-y-1.5">
               <Label>Search</Label>
               <Input placeholder="Ticket # or subject" value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} />
             </div>
-            <div className="space-y-1.5">
+            <div className="w-36 space-y-1.5">
               <Label>Status</Label>
               <Select value={status || "all"} onValueChange={(v) => reset(setStatus)(v === "all" ? "" : v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -100,7 +101,7 @@ function AdminTotalTickets() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1.5">
+            <div className="w-36 space-y-1.5">
               <Label>Division</Label>
               <Select value={division || "all"} onValueChange={(v) => reset(setDivision)(v === "all" ? "" : v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -110,7 +111,7 @@ function AdminTotalTickets() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1.5">
+            <div className="w-48 space-y-1.5">
               <Label>Assignee</Label>
               <Select value={assignee || "all"} onValueChange={(v) => reset(setAssignee)(v === "all" ? "" : v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -120,11 +121,11 @@ function AdminTotalTickets() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1.5">
+            <div className="w-40 space-y-1.5">
               <Label>From</Label>
               <Input type="date" value={from} onChange={e => { setFrom(e.target.value); setPage(1); }} />
             </div>
-            <div className="space-y-1.5">
+            <div className="w-40 space-y-1.5">
               <Label>To</Label>
               <Input type="date" value={to} onChange={e => { setTo(e.target.value); setPage(1); }} />
             </div>
@@ -173,7 +174,7 @@ function AdminTotalTickets() {
                 {selectedTicket.description && (
                   <div>
                     <span className="text-xs uppercase tracking-wider text-muted-foreground block mb-0.5">Description</span>
-                    <div className="text-xs text-muted-foreground bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-lg p-3 leading-relaxed whitespace-pre-wrap">
+                    <div className="text-xs text-muted-foreground bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-lg p-3 leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere] max-w-full">
                       {selectedTicket.description}
                     </div>
                   </div>

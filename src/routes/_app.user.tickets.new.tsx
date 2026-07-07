@@ -41,7 +41,17 @@ function NewTicket() {
   const navigate = useNavigate();
   const [level, setLevel] = useState<"L2" | "L3">("L2");
   const [subRole, setSubRole] = useState<string>("");
-  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setSelectedFiles(prev => [...prev, ...Array.from(e.target.files!)]);
+    }
+  };
+
+  const removeFile = (idx: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== idx));
+  };
 
   const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } =
     useForm<FormVals>({ resolver: zodResolver(schema), defaultValues: { level: "L2" } });
@@ -65,7 +75,7 @@ function NewTicket() {
     navigate({ to: "/tickets/$ticketId", params: { ticketId: t.ticketId } });
   };
 
-  const filesArray = selectedFiles ? Array.from(selectedFiles) : [];
+  const filesArray = selectedFiles;
 
   return (
     <div className="space-y-6">
@@ -152,7 +162,8 @@ function NewTicket() {
                 type="file" 
                 multiple 
                 className="hidden" 
-                onChange={(e) => setSelectedFiles(e.target.files)} 
+                onChange={handleFileChange} 
+                onClick={(e) => { (e.target as HTMLInputElement).value = ""; }}
               />
             </div>
             
@@ -168,6 +179,13 @@ function NewTicket() {
                       <FileText className="h-4 w-4 text-primary dark:text-blue-400" />
                       <span>{file.name}</span>
                       <span className="text-[10px] text-muted-foreground font-normal">({Math.round(file.size / 1024)} KB)</span>
+                      <button
+                        type="button"
+                        onClick={() => removeFile(i)}
+                        className="text-muted-foreground hover:text-slate-900 dark:hover:text-white font-bold ml-1"
+                      >
+                        ×
+                      </button>
                     </div>
                   ))}
                 </div>

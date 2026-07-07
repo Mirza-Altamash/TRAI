@@ -12,7 +12,15 @@ function triggerBlobDownload(blob: Blob, filename: string) {
   window.URL.revokeObjectURL(url);
 }
 
-const HEADERS = ["Date & Time", "Action By", "Role", "Action", "Comment"];
+const HEADERS = [
+  "Date & Time",
+  "Action By",
+  "Role",
+  "Action",
+  "Comment / Description",
+  "Status",
+  "Attachments",
+];
 
 function rowsOf(rows: TrailLog[]) {
   return rows.map((r) => [
@@ -21,11 +29,14 @@ function rowsOf(rows: TrailLog[]) {
     r.performerRole,
     r.action,
     r.comment ?? "—",
+    r.currentStatus ?? "Open",
+    (r.attachments || []).map((a) => a.filename).join(", ") || "—",
   ]);
 }
 
 export async function exportTrailToExcel(ticketId: string, rows: TrailLog[], generatedBy: string) {
   const XLSX = await import("xlsx");
+  const dataRows = rowsOf(rows);
   const ws = XLSX.utils.aoa_to_sheet([
     ["Telecom Regulatory Authority of India"],
     [`Complete Trail — ${ticketId}`],
@@ -33,8 +44,22 @@ export async function exportTrailToExcel(ticketId: string, rows: TrailLog[], gen
     [`Generated: ${formatIstDateTime(new Date().toISOString())}`],
     [],
     HEADERS,
-    ...rowsOf(rows),
+    ...dataRows,
   ]);
+  
+  // Set column widths dynamically to prevent alignment truncation
+  ws["!cols"] = HEADERS.map((h, colIndex) => {
+    let maxLen = h.length;
+    for (const row of dataRows) {
+      const val = row[colIndex];
+      if (val !== undefined && val !== null) {
+        const len = String(val).length;
+        if (len > maxLen) maxLen = len;
+      }
+    }
+    return { wch: Math.min(Math.max(maxLen + 3, 12), 60) };
+  });
+
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Trail");
   const out = XLSX.write(wb, { type: "array", bookType: "xlsx" }) as ArrayBuffer;
@@ -65,8 +90,9 @@ export async function exportTrailToPdf(ticketId: string, rows: TrailLog[], gener
     startY: 84,
     head: [HEADERS],
     body: rowsOf(rows),
-    styles: { fontSize: 8, cellPadding: 4 },
+    styles: { fontSize: 8, cellPadding: 4, overflow: "linebreak" },
     headStyles: { fillColor: [0, 68, 139], textColor: 255 },
+    columnStyles: { 4: { cellWidth: 220 } }, // widen comment column
     didDrawPage: () => {
       const pageHeight = doc.internal.pageSize.getHeight();
       const pageCount = doc.getNumberOfPages();

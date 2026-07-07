@@ -1,6 +1,6 @@
 export type Role = "ADMIN" | "USER" | "L2" | "L3";
-export type L2SubRole = "Developer" | "Infra" | "Network";
-export type L3SubRole = "SRO" | "J.Adv" | "D.Adv" | "Adv";
+export type L2SubRole = "Developer" | "Infra" | "Network" | "Support";
+export type L3SubRole = "SRO" | "J.Adv" | "D.Adv" | "Adv" | "TO" | "SO" | "Assistant";
 export type SubRole = L2SubRole | L3SubRole | null;
 
 export type Division = "IT" | "NSL" | "QoS" | "B&CS" | "F&EA";
@@ -68,6 +68,14 @@ export interface TrailLog {
   previousStatus?: TicketStatus;
   currentStatus?: TicketStatus;
   attachment?: Attachment;
+  attachments?: {
+    filename: string;
+    url: string;
+    mimeType: string;
+    size: number;
+    uploadedAt: string;
+    uploadedBy: string;
+  }[];
   createdAt: string;
 }
 
@@ -118,5 +126,5 @@ export const DIVISIONS: Division[] = ["IT", "NSL", "QoS", "B&CS", "F&EA"];
 export const PRIORITIES: Priority[] = ["Normal", "Medium", "High"];
 export const TICKET_TYPES: TicketType[] = ["New Development", "Modification", "Reports"];
 export const STATUSES: TicketStatus[] = ["Open", "Resolved", "Closed"];
-export const L2_SUBROLES: L2SubRole[] = ["Developer", "Infra", "Network"];
-export const L3_SUBROLES: L3SubRole[] = ["SRO", "J.Adv", "D.Adv", "Adv"];
+export const L2_SUBROLES: L2SubRole[] = ["Developer", "Infra", "Network", "Support"];
+export const L3_SUBROLES: L3SubRole[] = ["SRO", "J.Adv", "D.Adv", "Adv", "TO", "SO", "Assistant"];

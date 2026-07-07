@@ -40,10 +40,9 @@ export const upload = multer({
   storage,
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
   fileFilter: (req, file, cb) => {
-    const allowedExtensions = /jpeg|jpg|png|pdf|doc|docx|xls|xlsx|txt|zip/;
+    const allowedExtensions = /jpeg|jpg|png|pdf|doc|docx|xls|xlsx|txt|zip|rar|ppt|pptx/;
     const extname = allowedExtensions.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = allowedExtensions.test(file.mimetype);
-    if (extname && mimetype) {
+    if (extname) {
       cb(null, true);
     } else {
       cb(new Error("Unsupported file type. Only standard documents/images are allowed."));

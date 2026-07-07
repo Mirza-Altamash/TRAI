@@ -88,6 +88,7 @@ export async function createTicket(req: AuthenticatedRequest, res: Response) {
     const roleString = assignee.subRole ? ` (${assignee.role} ${assignee.subRole})` : ` (${assignee.role})`;
 
     // Create TrailLog for creation & initial assignment
+    console.log("Create Ticket trail: ticketId", ticketId);
     await TrailLog.create({
       id: crypto.randomUUID(),
       ticketId,
@@ -98,6 +99,10 @@ export async function createTicket(req: AuthenticatedRequest, res: Response) {
       performerRole: creator.role,
       toAssignee: assignee.empId,
       currentStatus: "Open",
+      actorUserId: creator.empId,
+      actorName: creator.name,
+      actorRole: creator.role,
+      actorDesignation: creator.designation || undefined,
       createdAt: now
     });
 
@@ -472,6 +477,7 @@ export async function addComment(req: AuthenticatedRequest, res: Response) {
     }
 
     // Create TrailLog
+    console.log("Comment trail: ticketId", ticketId);
     const log = await TrailLog.create({
       id: crypto.randomUUID(),
       ticketId,
@@ -482,6 +488,10 @@ export async function addComment(req: AuthenticatedRequest, res: Response) {
       performerRole: performer.role,
       currentStatus: ticket.currentStatus,
       attachments,
+      actorUserId: performer.empId,
+      actorName: performer.name,
+      actorRole: performer.role,
+      actorDesignation: performer.designation || undefined,
       createdAt: now
     });
 
@@ -595,6 +605,7 @@ export async function reassignTicket(req: AuthenticatedRequest, res: Response) {
     }
 
     // Create TrailLog for reassignment
+    console.log("Reassign Ticket trail: ticketId", ticketId);
     await TrailLog.create({
       id: crypto.randomUUID(),
       ticketId,
@@ -608,6 +619,10 @@ export async function reassignTicket(req: AuthenticatedRequest, res: Response) {
       previousStatus: prevStatus,
       currentStatus: "Open",
       attachments,
+      actorUserId: performer.empId,
+      actorName: performer.name,
+      actorRole: performer.role,
+      actorDesignation: performer.designation || undefined,
       createdAt: now
     });
 
@@ -670,7 +685,7 @@ export async function updateStatus(req: AuthenticatedRequest, res: Response) {
       return res.status(400).json({ message: "Performer employee not found" });
     }
 
-    if (performer.role === "L2") {
+    if (performer.role === "L2" && performer.empId !== ticket.createdBy) {
       return res.status(403).json({ message: "L2 employees are not allowed to change ticket status" });
     }
 
@@ -712,6 +727,7 @@ export async function updateStatus(req: AuthenticatedRequest, res: Response) {
       await ticket.save();
 
       const actionText = `Ticket Resolved and Assigned to ${creator.name}`;
+      console.log("Status Change trail: ticketId", ticketId);
       await TrailLog.create({
         id: crypto.randomUUID(),
         ticketId,
@@ -724,6 +740,10 @@ export async function updateStatus(req: AuthenticatedRequest, res: Response) {
         previousStatus: prevStatus,
         currentStatus: "Resolved",
         attachments,
+        actorUserId: performer.empId,
+        actorName: performer.name,
+        actorRole: performer.role,
+        actorDesignation: performer.designation || undefined,
         createdAt: now
       });
 
@@ -744,6 +764,7 @@ export async function updateStatus(req: AuthenticatedRequest, res: Response) {
         ticket.closedAt = now;
         await ticket.save();
 
+        console.log("Status Change trail: ticketId", ticketId);
         await TrailLog.create({
           id: crypto.randomUUID(),
           ticketId,
@@ -755,6 +776,10 @@ export async function updateStatus(req: AuthenticatedRequest, res: Response) {
           previousStatus: prevStatus,
           currentStatus: "Closed",
           attachments,
+          actorUserId: performer.empId,
+          actorName: performer.name,
+          actorRole: performer.role,
+          actorDesignation: performer.designation || undefined,
           createdAt: now
         });
 
@@ -772,6 +797,7 @@ export async function updateStatus(req: AuthenticatedRequest, res: Response) {
         ticket.closedAt = now;
         await ticket.save();
 
+        console.log("Status Change trail: ticketId", ticketId);
         await TrailLog.create({
           id: crypto.randomUUID(),
           ticketId,
@@ -783,6 +809,10 @@ export async function updateStatus(req: AuthenticatedRequest, res: Response) {
           previousStatus: prevStatus,
           currentStatus: "Closed",
           attachments,
+          actorUserId: performer.empId,
+          actorName: performer.name,
+          actorRole: performer.role,
+          actorDesignation: performer.designation || undefined,
           createdAt: now
         });
       }
@@ -880,6 +910,7 @@ export async function deleteTicket(req: AuthenticatedRequest, res: Response) {
     }
 
     await Ticket.deleteOne({ ticketId });
+    await TrailLog.deleteMany({ ticketId });
 
     // Write AuditLog
     if (req.user) {
@@ -1002,6 +1033,7 @@ export async function reopenTicket(req: AuthenticatedRequest, res: Response) {
     await ticket.save();
 
     // Create TrailLog
+    console.log("Reopen Ticket trail: ticketId", ticketId);
     await TrailLog.create({
       id: crypto.randomUUID(),
       ticketId,
@@ -1014,6 +1046,10 @@ export async function reopenTicket(req: AuthenticatedRequest, res: Response) {
       previousStatus: prevStatus,
       currentStatus: "Open",
       attachments,
+      actorUserId: performer.empId,
+      actorName: performer.name,
+      actorRole: performer.role,
+      actorDesignation: performer.designation || undefined,
       createdAt: now
     });
 

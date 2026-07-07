@@ -180,7 +180,7 @@ function LoginPage() {
                   <div className={`flex cursor-pointer items-center justify-center gap-2 rounded-lg border p-2.5 text-xs font-semibold tracking-wide transition-all ${mode === "empId" ? "border-[#00448B] bg-blue-50/50 text-[#00448B]" : "border-slate-200 bg-white hover:bg-slate-50 text-slate-600"}`}>
                     <RadioGroupItem id="mode-empId" value="empId" className="sr-only" />
                     <span className={`h-2 w-2 rounded-full ${mode === "empId" ? "bg-[#00448B]" : "bg-slate-300"}`} />
-                    <Label htmlFor="mode-empId" className="cursor-pointer">Employee ID</Label>
+                    <Label htmlFor="mode-empId" className="cursor-pointer">User ID</Label>
                   </div>
                   <div className={`flex cursor-pointer items-center justify-center gap-2 rounded-lg border p-2.5 text-xs font-semibold tracking-wide transition-all ${mode === "email" ? "border-[#00448B] bg-blue-50/50 text-[#00448B]" : "border-slate-200 bg-white hover:bg-slate-50 text-slate-600"}`}>
                     <RadioGroupItem id="mode-email" value="email" className="sr-only" />
@@ -193,7 +193,7 @@ function LoginPage() {
               {/* Identifier Input */}
               <div className="space-y-1.5">
                 <Label htmlFor="identifier" className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                  {mode === "empId" ? "Employee ID" : "Official Email"}
+                  {mode === "empId" ? "User ID" : "Official Email"}
                 </Label>
                 <Input
                   id="identifier"

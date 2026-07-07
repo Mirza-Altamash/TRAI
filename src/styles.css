@@ -159,3 +159,21 @@
     color: var(--color-foreground);
   }
 }
+
+.trail-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  max-width: 100%;
+  vertical-align: top;
+}
+
+.trail-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+table.trail-table {
+  width: 100%;
+  table-layout: fixed;
+}

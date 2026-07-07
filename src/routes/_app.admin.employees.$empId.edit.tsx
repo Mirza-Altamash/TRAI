@@ -14,17 +14,21 @@ import { Switch } from "@/components/ui/switch";
 import { getEmployee, updateEmployee } from "@/services/mock";
 import { DIVISIONS, L2_SUBROLES, L3_SUBROLES } from "@/types";
 import { toast } from "sonner";
+import { ArrowLeft } from "lucide-react";
 
 const schema = z.object({
   name: z.string().min(2, "Required"),
   email: z.string().email("Invalid email"),
-  role: z.enum(["USER", "L2", "L3", "ADMIN"]),
+  role: z.enum(["USER", "L2", "L3", "ADMIN"]).or(z.literal("")),
   subRole: z.string().optional(),
-  division: z.string().min(1, "Required"),
+  division: z.string().optional(),
   designation: z.string().min(1, "Required"),
   floor: z.string().min(1, "Required"),
   isActive: z.boolean(),
-}).refine(d => d.role === "USER" || d.role === "ADMIN" || !!d.subRole, { path: ["subRole"], message: "Required for L2/L3" });
+}).refine(d => {
+  if (d.role === "L2" || d.role === "L3") return !!d.subRole;
+  return true;
+}, { path: ["subRole"], message: "Required for L2/L3" });
 
 type FormVals = z.infer<typeof schema>;
 
@@ -32,7 +36,7 @@ export const Route = createFileRoute("/_app/admin/employees/$empId/edit")({
   component: EditEmployee,
   notFoundComponent: () => (
     <div className="p-8 text-sm text-muted-foreground">
-      Employee not found. <Link to="/admin/employees" className="text-primary underline">Back to employees</Link>
+      User not found. <Link to="/admin/employees" className="text-primary underline">Back to User Management</Link>
     </div>
   ),
 });
@@ -55,7 +59,7 @@ function EditEmployee() {
       reset({
         name: employee.name,
         email: employee.email,
-        role: employee.role as never,
+        role: employee.role || "",
         subRole: employee.subRole ?? undefined,
         division: employee.division,
         designation: employee.designation,
@@ -69,12 +73,14 @@ function EditEmployee() {
   if (!isLoading && !employee) throw notFound();
 
   const onSubmit = async (v: FormVals) => {
+    const finalRole = v.role || employee?.role || "USER";
     await updateEmployee(empId, {
-      name: v.name, email: v.email, role: v.role,
-      subRole: (v.role === "USER" || v.role === "ADMIN" ? null : (v.subRole as never)) ?? null,
-      division: v.division as never, designation: v.designation, floor: v.floor, isActive: v.isActive,
+      name: v.name, email: v.email, role: finalRole,
+      subRole: (finalRole === "USER" || finalRole === "ADMIN" ? null : (v.subRole as never)) ?? null,
+      division: v.division ? (v.division as never) : undefined,
+      designation: v.designation, floor: v.floor, isActive: v.isActive,
     });
-    toast.success("Employee updated");
+    toast.success("User updated");
     qc.invalidateQueries({ queryKey: ["employees"] });
     qc.invalidateQueries({ queryKey: ["employee", empId] });
     navigate({ to: "/admin/employees" });
@@ -82,11 +88,21 @@ function EditEmployee() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Edit Employee" subtitle={`Update details for ${empId}.`} />
+      <PageHeader
+        title="Edit User"
+        subtitle={`Update details for ${empId}.`}
+        actions={
+          <Button asChild variant="outline">
+            <Link to="/admin/employees">
+              <ArrowLeft className="mr-1.5 h-4 w-4" /> Back to User Management
+            </Link>
+          </Button>
+        }
+      />
       <Card>
         <CardContent className="p-6">
           <form className="grid gap-4 md:grid-cols-2" onSubmit={handleSubmit(onSubmit)}>
-            <Field label="Employee ID">
+            <Field label="User ID">
               <Input value={empId} readOnly disabled className="font-mono" />
             </Field>
             <Field label="Role" error={errors.role?.message}>
@@ -100,7 +116,7 @@ function EditEmployee() {
                 </SelectContent>
               </Select>
             </Field>
-            {role !== "USER" && (
+            {(role === "L2" || role === "L3") && (
               <Field label="Sub Role" error={errors.subRole?.message}>
                 <Select value={watch("subRole") ?? ""} onValueChange={(v) => setValue("subRole", v)}>
                   <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>

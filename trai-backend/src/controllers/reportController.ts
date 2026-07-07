@@ -55,22 +55,37 @@ export async function getUserMetrics(req: AuthenticatedRequest, res: Response) {
 export async function getAssigneeMetrics(req: AuthenticatedRequest, res: Response) {
   try {
     const empId = req.query.empId as string || req.user?.empId;
+    const kind = req.query.kind as string; // 'assigned' or 'created'
 
     if (!empId) {
       return res.status(400).json({ message: "Employee ID is required" });
     }
 
-    const assigned = await Ticket.countDocuments({ currentAssignee: empId });
-    const open = await Ticket.countDocuments({ currentAssignee: empId, currentStatus: "Open" });
-    const resolved = await Ticket.countDocuments({ currentAssignee: empId, currentStatus: "Resolved" });
-    const closed = await Ticket.countDocuments({ currentAssignee: empId, currentStatus: "Closed" });
+    if (kind === "created") {
+      const assigned = await Ticket.countDocuments({ createdBy: empId });
+      const open = await Ticket.countDocuments({ createdBy: empId, currentStatus: "Open" });
+      const resolved = await Ticket.countDocuments({ createdBy: empId, currentStatus: "Resolved" });
+      const closed = await Ticket.countDocuments({ createdBy: empId, currentStatus: "Closed" });
 
-    return res.json({
-      assigned,
-      open,
-      resolved,
-      closed
-    });
+      return res.json({
+        assigned,
+        open,
+        resolved,
+        closed
+      });
+    } else {
+      const assigned = await Ticket.countDocuments({ currentAssignee: empId });
+      const open = await Ticket.countDocuments({ currentAssignee: empId, currentStatus: "Open" });
+      const resolved = await Ticket.countDocuments({ currentAssignee: empId, currentStatus: "Resolved" });
+      const closed = await Ticket.countDocuments({ currentAssignee: empId, currentStatus: "Closed" });
+
+      return res.json({
+        assigned,
+        open,
+        resolved,
+        closed
+      });
+    }
   } catch (error: any) {
     console.error("Get assignee metrics error:", error);
     return res.status(500).json({ message: error.message || "Internal server error" });
@@ -291,38 +306,45 @@ export async function getMisReport(req: AuthenticatedRequest, res: Response) {
 
 export async function listAuditLogs(req: AuthenticatedRequest, res: Response) {
   try {
-    const { action, empId, search, from, to, page = 1, pageSize = 15 } = req.query;
+    const {
+      searchText,
+      role,
+      actionType,
+      page = 1, pageSize = 15
+    } = req.query;
 
     const p = parseInt(page as string, 10);
     const size = parseInt(pageSize as string, 10);
 
     const query: any = {};
 
-    if (action) query.action = action;
-    if (empId) {
-      const empIdRegex = new RegExp(empId as string, "i");
-      query.empId = empIdRegex;
+    if (actionType && actionType !== "All") {
+      query.action = actionType;
+    }
+    
+    if (role && role !== "All") {
+      query.role = role;
     }
 
-    if (search) {
-      const searchRegex = new RegExp(search as string, "i");
+    if (searchText) {
+      const searchStr = searchText as string;
+      const searchRegex = new RegExp(searchStr, "i");
       query.$or = [
         { empId: searchRegex },
         { empName: searchRegex },
         { role: searchRegex },
         { action: searchRegex },
-        { context: searchRegex }
+        { context: searchRegex },
+        {
+          $expr: {
+            $regexMatch: {
+              input: { $dateToString: { format: "%d-%m-%Y %B %m-%Y", date: "$createdAt", timezone: "+05:30" } },
+              regex: searchStr,
+              options: "i"
+            }
+          }
+        }
       ];
-    }
-
-    if (from || to) {
-      query.createdAt = {};
-      if (from) query.createdAt.$gte = new Date(from as string);
-      if (to) {
-        const toDate = new Date(to as string);
-        toDate.setHours(23, 59, 59, 999);
-        query.createdAt.$lte = toDate;
-      }
     }
 
     const total = await AuditLog.countDocuments(query);

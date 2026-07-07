@@ -22,6 +22,10 @@ export interface ITrailLog extends Document {
     uploadedAt: Date;
     uploadedBy: string;
   }[];
+  actorUserId?: string;
+  actorName?: string;
+  actorRole?: string;
+  actorDesignation?: string;
   createdAt: Date;
 }
 
@@ -54,6 +58,10 @@ const TrailLogSchema = new Schema<ITrailLog>({
     uploadedAt: { type: Date, default: Date.now },
     uploadedBy: String
   }],
+  actorUserId: { type: String },
+  actorName: { type: String },
+  actorRole: { type: String },
+  actorDesignation: { type: String },
   createdAt: { type: Date, default: Date.now }
 });
 

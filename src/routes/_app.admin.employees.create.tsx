@@ -1,7 +1,8 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,6 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { createEmployee } from "@/services/mock";
 import { DIVISIONS, L2_SUBROLES, L3_SUBROLES } from "@/types";
 import { toast } from "sonner";
+import { ArrowLeft } from "lucide-react";
 
 const schema = z.object({
   empId: z.string().min(3, "Required"),
@@ -45,14 +47,24 @@ function CreateEmployee() {
       division: v.division as never, designation: v.designation, floor: v.floor, isActive: v.isActive,
       password: v.password
     });
-    toast.success("Employee created");
+    toast.success("User created");
     qc.invalidateQueries({ queryKey: ["employees"] });
     navigate({ to: "/admin/employees" });
   };
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Create Employee" subtitle="Add a new user, L2, or L3 member." />
+      <PageHeader
+        title="Create User"
+        subtitle="Add a new user, L2, or L3 member."
+        actions={
+          <Button asChild variant="outline">
+            <Link to="/admin/employees">
+              <ArrowLeft className="mr-1.5 h-4 w-4" /> Back to User Management
+            </Link>
+          </Button>
+        }
+      />
       <Card>
         <CardContent className="p-6">
           <form className="grid gap-4 md:grid-cols-2" onSubmit={handleSubmit(onSubmit)}>
@@ -77,7 +89,7 @@ function CreateEmployee() {
                 </Select>
               </Field>
             )}
-            <Field label="Employee ID" error={errors.empId?.message}><Input placeholder="TRAI-USR-200" {...register("empId")} /></Field>
+            <Field label="User ID" error={errors.empId?.message}><Input placeholder="TRAI-USR-200" {...register("empId")} /></Field>
             <Field label="Name" error={errors.name?.message}><Input {...register("name")} /></Field>
             <Field label="Email" error={errors.email?.message}><Input type="email" {...register("email")} /></Field>
             <Field label="Password" error={errors.password?.message}><Input type="password" {...register("password")} /></Field>
@@ -98,7 +110,7 @@ function CreateEmployee() {
             </div>
             <div className="md:col-span-2 flex justify-end gap-2 pt-2">
               <Button type="button" variant="outline" onClick={() => navigate({ to: "/admin/employees" })}>Cancel</Button>
-              <Button type="submit" disabled={isSubmitting}>Create employee</Button>
+              <Button type="submit" disabled={isSubmitting}>Create User</Button>
             </div>
           </form>
         </CardContent>

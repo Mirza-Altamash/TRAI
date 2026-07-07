@@ -148,6 +148,10 @@ export async function seedDatabase() {
       performedByName: createdBy.name,
       performerRole: createdBy.role,
       currentStatus: "Open",
+      actorUserId: createdBy.empId,
+      actorName: createdBy.name,
+      actorRole: createdBy.role,
+      actorDesignation: createdBy.designation || undefined,
       createdAt
     });
 
@@ -162,6 +166,10 @@ export async function seedDatabase() {
         performedByName: assignee.name,
         performerRole: assignee.role,
         currentStatus: "Resolved",
+        actorUserId: assignee.empId,
+        actorName: assignee.name,
+        actorRole: assignee.role,
+        actorDesignation: assignee.designation || undefined,
         createdAt: resolvedAt
       });
     }
@@ -177,6 +185,10 @@ export async function seedDatabase() {
         performedByName: assignee.name,
         performerRole: assignee.role,
         currentStatus: "Resolved",
+        actorUserId: assignee.empId,
+        actorName: assignee.name,
+        actorRole: assignee.role,
+        actorDesignation: assignee.designation || undefined,
         createdAt: resolvedAt
       });
 
@@ -190,6 +202,10 @@ export async function seedDatabase() {
         performerRole: createdBy.role,
         previousStatus: "Resolved",
         currentStatus: "Closed",
+        actorUserId: createdBy.empId,
+        actorName: createdBy.name,
+        actorRole: createdBy.role,
+        actorDesignation: createdBy.designation || undefined,
         createdAt: closedAt
       });
     }

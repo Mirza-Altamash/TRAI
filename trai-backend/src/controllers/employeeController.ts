@@ -7,7 +7,7 @@ import { hashPassword } from "../services/authService";
 
 export async function listEmployees(req: AuthenticatedRequest, res: Response) {
   try {
-    const { search, division, role, subRole, page = 1, pageSize = 10, sortDir = "desc" } = req.query;
+    const { search, division, role, subRole, status, page = 1, pageSize = 10, sortDir = "desc" } = req.query;
 
     const p = parseInt(page as string, 10);
     const size = parseInt(pageSize as string, 10);
@@ -26,6 +26,9 @@ export async function listEmployees(req: AuthenticatedRequest, res: Response) {
     if (division) query.division = division;
     if (role) query.role = role;
     if (subRole) query.subRole = subRole;
+    
+    if (status === "Active") query.isActive = true;
+    else if (status === "Inactive") query.isActive = false;
 
     const sortOrder = sortDir === "asc" ? 1 : -1;
 
@@ -133,6 +136,20 @@ export async function updateEmployee(req: AuthenticatedRequest, res: Response) {
       return res.status(404).json({ message: "Employee not found" });
     }
 
+    // Preserve existing role if the patch role is empty
+    if (patch.role === "" || patch.role === null || patch.role === undefined) {
+       patch.role = employee.role;
+    }
+
+    // Preserve existing subRole for L2/L3 if empty
+    if (patch.role === "L2" || patch.role === "L3") {
+      if (typeof patch.subRole !== "string" || patch.subRole.trim() === "") {
+        patch.subRole = employee.subRole;
+      }
+    } else {
+      patch.subRole = null;
+    }
+
     // Apply updates
     Object.assign(employee, patch);
     await employee.save();
@@ -167,6 +184,10 @@ export async function deleteEmployee(req: AuthenticatedRequest, res: Response) {
 
     if (!employee) {
       return res.status(404).json({ message: "Employee not found" });
+    }
+    
+    if (employee.isActive) {
+      return res.status(400).json({ message: "Cannot delete an active user. Please mark as inactive first." });
     }
 
     await Employee.deleteOne({ empId });

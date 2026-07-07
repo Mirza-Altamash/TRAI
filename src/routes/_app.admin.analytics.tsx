@@ -73,7 +73,7 @@ function AnalyticsPage() {
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard title="Open vs Resolved (Monthly)">
+        <ChartCard title="Open vs Resolved (Monthly)" customTotalText={`Total Open: ${a.monthly.reduce((sum, item) => sum + (item.open || 0), 0)} | Total Resolved: ${a.monthly.reduce((sum, item) => sum + (item.resolved || 0), 0)}`}>
           <ResponsiveContainer width="100%" height={260}>
             <LineChart data={a.monthly}>
               <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
@@ -99,17 +99,7 @@ function AnalyticsPage() {
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard title="L3 Workload" totals={a.l3workload}>
-          <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={a.l3workload}>
-              <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
-              <XAxis dataKey="name" fontSize={11} stroke={isDark ? "#94a3b8" : "#475569"} />
-              <YAxis fontSize={12} stroke={isDark ? "#94a3b8" : "#475569"} />
-              <Tooltip contentStyle={{ backgroundColor: isDark ? "#1e293b" : "#ffffff", borderColor: isDark ? "#334155" : "#e2e8f0", color: isDark ? "#f8fafc" : "#0f172a" }} />
-              <Bar dataKey="count" fill={warningColor} radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </ChartCard>
+
       </div>
     </div>
   );
@@ -119,14 +109,22 @@ function ChartCard({
   title,
   children,
   totals,
+  customTotalText,
 }: {
   title: string;
   children: React.ReactNode;
   totals?: { name: string; count: number }[];
+  customTotalText?: string;
 }) {
+  const totalVal = totals ? totals.reduce((sum, item) => sum + item.count, 0) : null;
   return (
     <Card>
-      <CardHeader><CardTitle className="text-base">{title}</CardTitle></CardHeader>
+      <CardHeader className="pb-2 flex flex-row items-center justify-between">
+        <CardTitle className="text-base font-semibold">{title}</CardTitle>
+        <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
+          {customTotalText ? customTotalText : totalVal !== null ? `Total: ${totalVal}` : ""}
+        </span>
+      </CardHeader>
       <CardContent className="space-y-4">
         {children}
         {totals && totals.length > 0 && (

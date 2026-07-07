@@ -65,7 +65,18 @@ async function writeExcel(opts: {
   XLSX.utils.book_append_sheet(wb, summarySheet, "Summary");
 
   const dataSheet = XLSX.utils.aoa_to_sheet([opts.headers, ...opts.data]);
-  dataSheet["!cols"] = opts.headers.map(() => ({ wch: 20 }));
+  // Calculate column widths dynamically to prevent alignment truncation
+  dataSheet["!cols"] = opts.headers.map((h, colIndex) => {
+    let maxLen = h.length;
+    for (const row of opts.data) {
+      const val = row[colIndex];
+      if (val !== undefined && val !== null) {
+        const len = String(val).length;
+        if (len > maxLen) maxLen = len;
+      }
+    }
+    return { wch: Math.min(Math.max(maxLen + 3, 12), 60) };
+  });
   XLSX.utils.book_append_sheet(wb, dataSheet, "Data");
 
   const analyticsSheet = XLSX.utils.aoa_to_sheet([
@@ -116,6 +127,24 @@ async function writePdf(opts: {
     body: opts.data,
     styles: { fontSize: 8, cellPadding: 4 },
     headStyles: { fillColor: [0, 68, 139], textColor: 255 },
+    didParseCell: (data: any) => {
+      if (data.section === "body") {
+        const header = opts.headers[data.column.index];
+        if (header === "Current Status" || header === "Status") {
+          const val = String(data.cell.raw || "");
+          if (val === "Open") {
+            data.cell.styles.textColor = [0, 102, 204]; // Blue
+            data.cell.styles.fontStyle = "bold";
+          } else if (val === "Resolved") {
+            data.cell.styles.textColor = [31, 122, 77]; // Green
+            data.cell.styles.fontStyle = "bold";
+          } else if (val === "Closed") {
+            data.cell.styles.textColor = [204, 0, 0]; // Red
+            data.cell.styles.fontStyle = "bold";
+          }
+        }
+      }
+    },
     didDrawPage: () => {
       const pageHeight = doc.internal.pageSize.getHeight();
       const pageCount = doc.getNumberOfPages();
