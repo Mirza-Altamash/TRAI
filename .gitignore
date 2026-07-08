@@ -37,3 +37,10 @@ dist-ssr
 *.env
 trai-backend/.env
 
+
+frontend/node_modules
+backend/node_modules
+frontend/dist
+backend/dist
+backend/uploads
+
