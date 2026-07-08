@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Activity, CheckCircle2, Inbox, Users, XCircle, Clock } from "lucide-react";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -8,7 +8,13 @@ import { TicketTable } from "@/components/common/TicketTable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { getAdminMetrics, listTickets, listEmployees } from "@/services/mock";
 import { useState } from "react";
 import type { TicketStatus } from "@/types";
@@ -17,6 +23,7 @@ export const Route = createFileRoute("/_app/admin/dashboard")({ component: Admin
 
 function AdminDashboard() {
   const navigate = useNavigate();
+  const router = useRouter();
   const [statusFilter, setStatusFilter] = useState<TicketStatus | "Assigned" | null>(null);
 
   // Search & Filter input states
@@ -32,35 +39,39 @@ function AdminDashboard() {
   const { data: usersData } = useQuery({
     queryKey: ["employees", { pageSize: 1000 }],
     queryFn: () => listEmployees({ pageSize: 1000 }),
-    enabled: statusFilter !== null
+    enabled: statusFilter !== null,
   });
-  const assignees = usersData?.rows.filter(e => e.role === "L2" || e.role === "L3") ?? [];
+  const assignees = usersData?.rows.filter((e) => e.role === "L2" || e.role === "L3") ?? [];
 
   const { data: recent } = useQuery({
-    queryKey: ["tickets", {
-      status: statusFilter ?? undefined,
-      search: search || undefined,
-      division: division || undefined,
-      assignee: assignee || undefined,
-      priority: priority || undefined,
-      type: type || undefined,
-      page: 1,
-      pageSize: statusFilter ? 50 : 8
-    }],
-    queryFn: () => listTickets({
-      status: statusFilter ?? undefined,
-      search: search || undefined,
-      division: division || undefined,
-      assignee: assignee || undefined,
-      priority: priority || undefined,
-      type: type || undefined,
-      page: 1,
-      pageSize: statusFilter ? 50 : 8
-    })
+    queryKey: [
+      "tickets",
+      {
+        status: statusFilter ?? undefined,
+        search: search || undefined,
+        division: division || undefined,
+        assignee: assignee || undefined,
+        priority: priority || undefined,
+        type: type || undefined,
+        page: 1,
+        pageSize: statusFilter ? 50 : 8,
+      },
+    ],
+    queryFn: () =>
+      listTickets({
+        status: statusFilter ?? undefined,
+        search: search || undefined,
+        division: division || undefined,
+        assignee: assignee || undefined,
+        priority: priority || undefined,
+        type: type || undefined,
+        page: 1,
+        pageSize: statusFilter ? 50 : 8,
+      }),
   });
 
   const toggleFilter = (status: TicketStatus | "Assigned") => {
-    setStatusFilter(prev => {
+    setStatusFilter((prev) => {
       const next = prev === status ? null : status;
       if (next === null) {
         // Reset all search/filter states when clearing the metric card status
@@ -76,15 +87,50 @@ function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Admin Dashboard" subtitle="System overview across all divisions and roles." />
+      <PageHeader
+        title="Admin Dashboard"
+        subtitle="System overview across all divisions and roles."
+      />
 
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
-        <MetricCard label="Total Tickets" value={m?.total ?? "—"} icon={Inbox} accent="primary" onClick={() => navigate({ to: "/admin/totalticket" })} />
-        <MetricCard label="Open" value={m?.open ?? "—"} icon={Clock} accent="info" onClick={() => toggleFilter("Open")} hint={statusFilter === "Open" ? "Filter active" : undefined} />
-        <MetricCard label="Resolved" value={m?.resolved ?? "—"} icon={CheckCircle2} accent="success" onClick={() => toggleFilter("Resolved")} hint={statusFilter === "Resolved" ? "Filter active" : undefined} />
-        <MetricCard label="Closed" value={m?.closed ?? "—"} icon={XCircle} accent="warn" onClick={() => toggleFilter("Closed")} hint={statusFilter === "Closed" ? "Filter active" : undefined} />
-        <MetricCard label="Assigned" value={m?.assigned ?? "—"} icon={Activity} accent="primary" onClick={() => toggleFilter("Assigned")} hint={statusFilter === "Assigned" ? "Filter active" : undefined} />
-        <MetricCard label="Users" value={m?.employees ?? "—"} icon={Users} accent="primary" onClick={() => navigate({ to: "/admin/employees" })} />
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5">
+        <MetricCard
+          label="Total Tickets"
+          value={m?.total ?? "—"}
+          icon={Inbox}
+          accent="primary"
+          onClick={() => navigate({ to: "/admin/totalticket" })}
+        />
+        <MetricCard
+          label="Open"
+          value={m?.open ?? "—"}
+          icon={Clock}
+          accent="info"
+          onClick={() => toggleFilter("Open")}
+          hint={statusFilter === "Open" ? "Filter active" : undefined}
+        />
+        <MetricCard
+          label="Resolved"
+          value={m?.resolved ?? "—"}
+          icon={CheckCircle2}
+          accent="success"
+          onClick={() => toggleFilter("Resolved")}
+          hint={statusFilter === "Resolved" ? "Filter active" : undefined}
+        />
+        <MetricCard
+          label="Closed"
+          value={m?.closed ?? "—"}
+          icon={XCircle}
+          accent="warn"
+          onClick={() => toggleFilter("Closed")}
+          hint={statusFilter === "Closed" ? "Filter active" : undefined}
+        />
+        <MetricCard
+          label="Users"
+          value={m?.employees ?? "—"}
+          icon={Users}
+          accent="primary"
+          onClick={() => navigate({ to: "/admin/employees" })}
+        />
       </div>
 
       {statusFilter !== null && (
@@ -104,7 +150,10 @@ function AdminDashboard() {
 
                 <div className="w-44 space-y-1.5">
                   <Label htmlFor="division">Division</Label>
-                  <Select value={division || "all"} onValueChange={(v) => setDivision(v === "all" ? "" : v)}>
+                  <Select
+                    value={division || "all"}
+                    onValueChange={(v) => setDivision(v === "all" ? "" : v)}
+                  >
                     <SelectTrigger id="division">
                       <SelectValue placeholder="All Divisions" />
                     </SelectTrigger>
@@ -121,7 +170,10 @@ function AdminDashboard() {
 
                 <div className="w-52 space-y-1.5">
                   <Label htmlFor="assignee">Assigned Member</Label>
-                  <Select value={assignee || "all"} onValueChange={(v) => setAssignee(v === "all" ? "" : v)}>
+                  <Select
+                    value={assignee || "all"}
+                    onValueChange={(v) => setAssignee(v === "all" ? "" : v)}
+                  >
                     <SelectTrigger id="assignee">
                       <SelectValue placeholder="All Members" />
                     </SelectTrigger>
@@ -138,7 +190,10 @@ function AdminDashboard() {
 
                 <div className="w-40 space-y-1.5">
                   <Label htmlFor="priority">Priority</Label>
-                  <Select value={priority || "all"} onValueChange={(v) => setPriority(v === "all" ? "" : v)}>
+                  <Select
+                    value={priority || "all"}
+                    onValueChange={(v) => setPriority(v === "all" ? "" : v)}
+                  >
                     <SelectTrigger id="priority">
                       <SelectValue placeholder="All Priorities" />
                     </SelectTrigger>
@@ -153,7 +208,10 @@ function AdminDashboard() {
 
                 <div className="w-44 space-y-1.5">
                   <Label htmlFor="type">Type/Category</Label>
-                  <Select value={type || "all"} onValueChange={(v) => setType(v === "all" ? "" : v)}>
+                  <Select
+                    value={type || "all"}
+                    onValueChange={(v) => setType(v === "all" ? "" : v)}
+                  >
                     <SelectTrigger id="type">
                       <SelectValue placeholder="All Types" />
                     </SelectTrigger>
@@ -177,12 +235,22 @@ function AdminDashboard() {
             {statusFilter ? `${statusFilter} Tickets` : "Recent Tickets"}
           </CardTitle>
           {statusFilter && (
-            <Button variant="ghost" size="sm" onClick={() => toggleFilter(statusFilter)} className="h-8 text-xs text-muted-foreground hover:text-foreground">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => toggleFilter(statusFilter)}
+              className="h-8 text-xs text-muted-foreground hover:text-foreground"
+            >
               Clear filter
             </Button>
           )}
         </CardHeader>
-        <CardContent className="p-0"><TicketTable rows={recent?.rows ?? []} /></CardContent>
+        <CardContent className="p-0">
+          <TicketTable
+            rows={recent?.rows ?? []}
+            onRowClick={(t) => router.navigate({ to: `/tickets/${t.ticketId}` })}
+          />
+        </CardContent>
       </Card>
     </div>
   );

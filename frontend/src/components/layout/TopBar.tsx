@@ -1,7 +1,14 @@
 import { Bell, ChevronDown, LogOut, ShieldCheck, KeyRound, Sun, Moon } from "lucide-react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/lib/auth";
@@ -20,7 +27,8 @@ export function TopBar() {
   const qc = useQueryClient();
   const [cpOpen, setCpOpen] = useState(false);
   const { data: notes = [] } = useQuery({
-    queryKey: ["notifications"], queryFn: listNotifications,
+    queryKey: ["notifications"],
+    queryFn: listNotifications,
     refetchInterval: 15000,
     refetchOnWindowFocus: true,
   });
@@ -47,9 +55,14 @@ export function TopBar() {
       active = false;
     };
   }, [qc]);
-  const unread = notes.filter(n => !n.read).length;
+  const unread = notes.filter((n) => !n.read).length;
   const user = session?.user;
-  const initials = user?.name.split(" ").map(s => s[0]).slice(0, 2).join("") ?? "?";
+  const initials =
+    user?.name
+      .split(" ")
+      .map((s) => s[0])
+      .slice(0, 2)
+      .join("") ?? "?";
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-card px-4 shadow-sm">
@@ -60,7 +73,9 @@ export function TopBar() {
           </div>
           <div className="leading-tight">
             <div className="text-sm font-semibold text-foreground">TRAI Portal</div>
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Complaint & Workflow</div>
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+              Complaint & Workflow
+            </div>
           </div>
         </Link>
       </div>
@@ -106,8 +121,12 @@ export function TopBar() {
           <DropdownMenuContent align="end" className="w-80">
             <DropdownMenuLabel>Notifications</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            {notes.length === 0 && <div className="px-3 py-6 text-center text-xs text-muted-foreground">No notifications</div>}
-            {notes.map(n => (
+            {notes.length === 0 && (
+              <div className="px-3 py-6 text-center text-xs text-muted-foreground">
+                No notifications
+              </div>
+            )}
+            {notes.map((n) => (
               <DropdownMenuItem
                 key={n.id}
                 className={`flex flex-col items-start gap-0.5 ${!n.read ? "bg-accent/40" : ""}`}
@@ -116,7 +135,8 @@ export function TopBar() {
                     (prev ?? []).map((x) => (x.id === n.id ? { ...x, read: true } : x)),
                   );
                   void markNotificationRead(n.id);
-                  if (n.ticketId) navigate({ to: "/tickets/$ticketId", params: { ticketId: n.ticketId } });
+                  if (n.ticketId)
+                    navigate({ to: "/tickets/$ticketId", params: { ticketId: n.ticketId } });
                 }}
               >
                 <div className="text-sm font-medium flex items-center gap-2">
@@ -124,7 +144,9 @@ export function TopBar() {
                   {n.title}
                 </div>
                 <div className="text-xs text-muted-foreground">{n.description}</div>
-                <div className="text-[10px] text-muted-foreground">{formatIstDateTime(n.createdAt)}</div>
+                <div className="text-[10px] text-muted-foreground">
+                  {formatIstDateTime(n.createdAt)}
+                </div>
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>
@@ -133,10 +155,17 @@ export function TopBar() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="flex items-center gap-2 px-2">
-              <Avatar className="h-7 w-7"><AvatarFallback className="bg-primary text-primary-foreground text-xs">{initials}</AvatarFallback></Avatar>
+              <Avatar className="h-7 w-7">
+                <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
               <div className="hidden text-left text-xs leading-tight md:block">
                 <div className="font-medium text-foreground">{user?.name}</div>
-                <div className="text-muted-foreground">{user?.role}{user?.subRole ? ` · ${user.subRole}` : ""}</div>
+                <div className="text-muted-foreground">
+                  {user?.role}
+                  {user?.subRole ? ` · ${user.subRole}` : ""}
+                </div>
               </div>
               <ChevronDown className="h-4 w-4 text-muted-foreground" />
             </Button>
@@ -147,8 +176,15 @@ export function TopBar() {
               <div className="text-xs font-normal text-muted-foreground">{user?.email}</div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => setCpOpen(true)}><KeyRound className="mr-2 h-4 w-4" /> Change Password</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => { signOut(); navigate({ to: "/login" }); }}>
+            <DropdownMenuItem onClick={() => setCpOpen(true)}>
+              <KeyRound className="mr-2 h-4 w-4" /> Change Password
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                signOut();
+                navigate({ to: "/login" });
+              }}
+            >
               <LogOut className="mr-2 h-4 w-4" /> Sign out
             </DropdownMenuItem>
           </DropdownMenuContent>

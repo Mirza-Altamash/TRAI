@@ -40,7 +40,7 @@ export async function createTicket(
     assigneeEmpId: string;
     comment?: string;
   },
-  files?: FileList | File[] | null
+  files?: FileList | File[] | null,
 ): Promise<Ticket> {
   const fd = new FormData();
   fd.append("division", input.division);
@@ -67,7 +67,7 @@ export async function createTicket(
 export async function addComment(
   ticketId: string,
   comment: string,
-  files?: FileList | File[] | null
+  files?: FileList | File[] | null,
 ): Promise<any> {
   const fd = new FormData();
   fd.append("comment", comment);
@@ -84,7 +84,7 @@ export async function reassignTicket(
   ticketId: string,
   toEmpId: string,
   comment: string,
-  files?: FileList | File[] | null
+  files?: FileList | File[] | null,
 ): Promise<Ticket> {
   const fd = new FormData();
   fd.append("toEmpId", toEmpId);
@@ -102,7 +102,7 @@ export async function updateStatus(
   ticketId: string,
   status: TicketStatus,
   comment: string,
-  files?: FileList | File[] | null
+  files?: FileList | File[] | null,
 ): Promise<Ticket> {
   const fd = new FormData();
   fd.append("status", status);
@@ -119,7 +119,7 @@ export async function updateStatus(
 export async function listAssigneeTicketsSplit(
   empId: string,
   kind: "new" | "all",
-  opts: { page?: number; pageSize?: number } = {}
+  opts: { page?: number; pageSize?: number } = {},
 ): Promise<Paginated<Ticket>> {
   const res = await apiClient.get<Paginated<Ticket>>("/tickets/split/assignee", {
     params: { empId, kind, ...opts },
@@ -134,7 +134,7 @@ export async function deleteTicket(ticketId: string): Promise<void> {
 export async function reopenTicket(
   ticketId: string,
   comment: string,
-  files?: FileList | File[] | null
+  files?: FileList | File[] | null,
 ): Promise<Ticket> {
   const fd = new FormData();
   fd.append("comment", comment);

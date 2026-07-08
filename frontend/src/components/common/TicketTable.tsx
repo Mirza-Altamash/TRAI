@@ -1,5 +1,12 @@
 import { Link } from "@tanstack/react-router";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "./StatusBadge";
@@ -25,7 +32,8 @@ export function TicketTable({
   onRowClick?: (ticket: Ticket) => void;
   selectedTicketId?: string;
 }) {
-  if (!rows.length) return <EmptyState title="No tickets" description="Tickets will appear here." />;
+  if (!rows.length)
+    return <EmptyState title="No tickets" description="Tickets will appear here." />;
   return (
     <Table>
       <TableHeader>
@@ -42,12 +50,13 @@ export function TicketTable({
         </TableRow>
       </TableHeader>
       <TableBody>
-        {rows.map(t => (
+        {rows.map((t) => (
           <TableRow
             key={t.ticketId}
             className={cn(
               onRowClick && "cursor-pointer transition-colors",
-              t.ticketId === selectedTicketId && "bg-[#00448B]/10 dark:bg-white/10 hover:bg-[#00448B]/15 dark:hover:bg-white/15 border-l-4 border-l-[#00448B]"
+              t.ticketId === selectedTicketId &&
+                "bg-[#00448B]/10 dark:bg-white/10 hover:bg-[#00448B]/15 dark:hover:bg-white/15 border-l-4 border-l-[#00448B]",
             )}
             onClick={() => onRowClick?.(t)}
           >
@@ -63,8 +72,12 @@ export function TicketTable({
             <TableCell>{t.division}</TableCell>
             {showCreatedBy && <TableCell>{t.createdByName}</TableCell>}
             {showAssignee && <TableCell>{t.currentAssigneeName}</TableCell>}
-            <TableCell><PriorityBadge priority={t.priority} /></TableCell>
-            <TableCell><StatusBadge status={t.currentStatus} /></TableCell>
+            <TableCell>
+              <PriorityBadge priority={t.priority} />
+            </TableCell>
+            <TableCell>
+              <StatusBadge status={t.currentStatus} />
+            </TableCell>
             <TableCell className="text-muted-foreground">{formatIstDate(t.createdAt)}</TableCell>
             <TableCell className="text-right">
               {onRowClick ? (

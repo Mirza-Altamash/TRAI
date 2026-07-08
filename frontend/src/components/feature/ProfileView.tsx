@@ -23,7 +23,9 @@ export function ProfileView() {
       <PageHeader title="My Profile" subtitle="Your TRAI account details." />
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
-          <CardHeader><CardTitle className="text-base">Account Information</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle className="text-base">Account Information</CardTitle>
+          </CardHeader>
           <CardContent>
             <Item k="Employee ID" v={u.empId} />
             <Item k="Name" v={u.name} />
@@ -35,10 +37,16 @@ export function ProfileView() {
           </CardContent>
         </Card>
         <Card>
-          <CardHeader><CardTitle className="text-base">Security</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle className="text-base">Security</CardTitle>
+          </CardHeader>
           <CardContent className="space-y-3">
-            <p className="text-sm text-muted-foreground">Keep your account secure by rotating your password regularly.</p>
-            <Button onClick={() => setOpen(true)}><KeyRound className="mr-1.5 h-4 w-4" /> Change Password</Button>
+            <p className="text-sm text-muted-foreground">
+              Keep your account secure by rotating your password regularly.
+            </p>
+            <Button onClick={() => setOpen(true)}>
+              <KeyRound className="mr-1.5 h-4 w-4" /> Change Password
+            </Button>
           </CardContent>
         </Card>
       </div>

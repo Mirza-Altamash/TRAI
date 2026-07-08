@@ -45,10 +45,14 @@ export function setCurrentSession(s: AuthSession | null) {
 
 export function dashboardPathFor(role: Role): string {
   switch (role) {
-    case "ADMIN": return "/admin/dashboard";
-    case "USER": return "/user/dashboard";
-    case "L2": return "/l2/assignments";
-    case "L3": return "/admin/dashboard";
+    case "ADMIN":
+      return "/admin/dashboard";
+    case "USER":
+      return "/user/dashboard";
+    case "L2":
+      return "/l2/assignments";
+    case "L3":
+      return "/admin/dashboard";
   }
 }
 

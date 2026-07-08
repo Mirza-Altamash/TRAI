@@ -35,3 +35,13 @@ export async function listAudit(q: any = {}): Promise<Paginated<AuditLog>> {
   const res = await apiClient.get<Paginated<AuditLog>>("/audit", { params: q });
   return res.data;
 }
+
+export async function getAssigneeAssignmentsReport(params: {
+  assigneeId?: string;
+  assigneeName?: string;
+  fromDate: string;
+  toDate: string;
+}) {
+  const res = await apiClient.get("/assignee-assignments", { params });
+  return res.data;
+}

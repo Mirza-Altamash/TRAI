@@ -7,9 +7,11 @@ import { TicketTable } from "@/components/common/TicketTable";
 import { Pager } from "@/components/common/Pager";
 import { useCurrentUser } from "@/lib/auth";
 import { listAssigneeTicketsSplit } from "@/services/mock";
+import { useRouter } from "@tanstack/react-router";
 
 export function AssigneeTickets({ label }: { label: "L2" | "L3" }) {
   const user = useCurrentUser();
+  const router = useRouter();
   const [newPage, setNewPage] = useState(1);
   const [allPage, setAllPage] = useState(1);
   const { data: newData } = useQuery({
@@ -22,7 +24,10 @@ export function AssigneeTickets({ label }: { label: "L2" | "L3" }) {
   });
   return (
     <div className="space-y-6">
-      <PageHeader title={`Tickets · ${label}`} subtitle="Assigned Tickets are awaiting your first action. Total Tickets covers everything assigned to you." />
+      <PageHeader
+        title={`Tickets · ${label}`}
+        subtitle="Assigned Tickets are awaiting your first action. Total Tickets covers everything assigned to you."
+      />
       <Tabs defaultValue="assigned">
         <TabsList>
           <TabsTrigger value="assigned">
@@ -33,16 +38,43 @@ export function AssigneeTickets({ label }: { label: "L2" | "L3" }) {
           </TabsTrigger>
         </TabsList>
         <TabsContent value="assigned" className="mt-4">
-          <Card><CardContent className="p-0">
-            <TicketTable rows={newData?.rows ?? []} showAssignee={false} markNewAll />
-            {newData && <Pager page={newData.page} pageSize={newData.pageSize} total={newData.total} onPageChange={setNewPage} />}
-          </CardContent></Card>
+          <Card>
+            <CardContent className="p-0">
+              <TicketTable
+                rows={newData?.rows ?? []}
+                showAssignee={false}
+                markNewAll
+                onRowClick={(t) => router.navigate({ to: `/tickets/${t.ticketId}` })}
+              />
+              {newData && (
+                <Pager
+                  page={newData.page}
+                  pageSize={newData.pageSize}
+                  total={newData.total}
+                  onPageChange={setNewPage}
+                />
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
         <TabsContent value="total" className="mt-4">
-          <Card><CardContent className="p-0">
-            <TicketTable rows={allData?.rows ?? []} showAssignee={false} />
-            {allData && <Pager page={allData.page} pageSize={allData.pageSize} total={allData.total} onPageChange={setAllPage} />}
-          </CardContent></Card>
+          <Card>
+            <CardContent className="p-0">
+              <TicketTable
+                rows={allData?.rows ?? []}
+                showAssignee={false}
+                onRowClick={(t) => router.navigate({ to: `/tickets/${t.ticketId}` })}
+              />
+              {allData && (
+                <Pager
+                  page={allData.page}
+                  pageSize={allData.pageSize}
+                  total={allData.total}
+                  onPageChange={setAllPage}
+                />
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

@@ -7,7 +7,14 @@ function toIst(date: string | Date): Date {
   const d = typeof date === "string" ? new Date(date) : date;
   // Build a Date whose UTC fields equal IST wall-clock fields, so date-fns
   // (which formats in local TZ) prints IST values regardless of server TZ.
-  return new Date(d.getTime() + IST_OFFSET_MS - new Date(d.getTime()).getTimezoneOffset() * 60_000 - IST_OFFSET_MS + (d.getTimezoneOffset() * 60_000) + IST_OFFSET_MS);
+  return new Date(
+    d.getTime() +
+      IST_OFFSET_MS -
+      new Date(d.getTime()).getTimezoneOffset() * 60_000 -
+      IST_OFFSET_MS +
+      d.getTimezoneOffset() * 60_000 +
+      IST_OFFSET_MS,
+  );
 }
 
 // Simpler, deterministic IST formatter using manual extraction.

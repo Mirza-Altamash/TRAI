@@ -10,7 +10,13 @@ import { useCurrentUser } from "@/lib/auth";
 import { listTickets } from "@/services/mock";
 import { getAssigneeMetrics } from "@/services/reportApi";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Activity, Clock, CheckCircle2, XCircle, Search } from "lucide-react";
 import type { TicketStatus } from "@/types";
 
@@ -25,19 +31,28 @@ function L3RaisedTickets() {
   // Fetch metrics scoped to createdBy
   const { data: metrics } = useQuery({
     queryKey: ["metrics", user.empId, "created"],
-    queryFn: () => getAssigneeMetrics(user.empId, "created")
+    queryFn: () => getAssigneeMetrics(user.empId, "created"),
   });
 
   // Fetch personal raised tickets list
   const { data: ticketData } = useQuery({
-    queryKey: ["tickets", { createdBy: user.empId, page, status: statusFilter === "all" ? undefined : statusFilter, search: searchText || undefined }],
-    queryFn: () => listTickets({
-      createdBy: user.empId,
-      page,
-      pageSize: 10,
-      status: (statusFilter === "all" ? undefined : statusFilter) as any,
-      search: searchText || undefined
-    })
+    queryKey: [
+      "tickets",
+      {
+        createdBy: user.empId,
+        page,
+        status: statusFilter === "all" ? undefined : statusFilter,
+        search: searchText || undefined,
+      },
+    ],
+    queryFn: () =>
+      listTickets({
+        createdBy: user.empId,
+        page,
+        pageSize: 10,
+        status: (statusFilter === "all" ? undefined : statusFilter) as any,
+        search: searchText || undefined,
+      }),
   });
 
   const getSubRoleLabel = (sub: string | null) => {
@@ -58,7 +73,10 @@ function L3RaisedTickets() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title={workspaceTitle} subtitle="Track and manage tickets you have raised in the system." />
+      <PageHeader
+        title={workspaceTitle}
+        subtitle="Track and manage tickets you have raised in the system."
+      />
 
       {/* Metric Cards Summary */}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
@@ -103,13 +121,22 @@ function L3RaisedTickets() {
           <Input
             placeholder="Search by ID, title, category, status..."
             value={searchText}
-            onChange={(e) => { setSearchText(e.target.value); setPage(1); }}
+            onChange={(e) => {
+              setSearchText(e.target.value);
+              setPage(1);
+            }}
             className="pl-9 bg-slate-50/50 dark:bg-slate-950/30"
           />
         </div>
 
         <div className="w-44">
-          <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v as any); setPage(1); }}>
+          <Select
+            value={statusFilter}
+            onValueChange={(v) => {
+              setStatusFilter(v as any);
+              setPage(1);
+            }}
+          >
             <SelectTrigger className="bg-slate-50/50 dark:bg-slate-950/30">
               <SelectValue placeholder="Filter by status" />
             </SelectTrigger>
@@ -133,7 +160,12 @@ function L3RaisedTickets() {
         <CardContent className="p-0">
           <TicketTable rows={ticketData?.rows ?? []} showCreatedBy={false} />
           {ticketData && (
-            <Pager page={ticketData.page} pageSize={ticketData.pageSize} total={ticketData.total} onPageChange={setPage} />
+            <Pager
+              page={ticketData.page}
+              pageSize={ticketData.pageSize}
+              total={ticketData.total}
+              onPageChange={setPage}
+            />
           )}
         </CardContent>
       </Card>

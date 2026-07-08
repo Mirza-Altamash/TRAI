@@ -9,26 +9,37 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { getEmployee, updateEmployee } from "@/services/mock";
 import { DIVISIONS, L2_SUBROLES, L3_SUBROLES } from "@/types";
 import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
 
-const schema = z.object({
-  name: z.string().min(2, "Required"),
-  email: z.string().email("Invalid email"),
-  role: z.enum(["USER", "L2", "L3", "ADMIN"]).or(z.literal("")),
-  subRole: z.string().optional(),
-  division: z.string().optional(),
-  designation: z.string().min(1, "Required"),
-  floor: z.string().min(1, "Required"),
-  isActive: z.boolean(),
-}).refine(d => {
-  if (d.role === "L2" || d.role === "L3") return !!d.subRole;
-  return true;
-}, { path: ["subRole"], message: "Required for L2/L3" });
+const schema = z
+  .object({
+    name: z.string().min(2, "Required"),
+    email: z.string().email("Invalid email"),
+    role: z.enum(["USER", "L2", "L3", "ADMIN"]).or(z.literal("")),
+    subRole: z.string().optional(),
+    division: z.string().optional(),
+    designation: z.string().min(1, "Required"),
+    floor: z.string().min(1, "Required"),
+    isActive: z.boolean(),
+  })
+  .refine(
+    (d) => {
+      if (d.role === "L2" || d.role === "L3") return !!d.subRole;
+      return true;
+    },
+    { path: ["subRole"], message: "Required for L2/L3" },
+  );
 
 type FormVals = z.infer<typeof schema>;
 
@@ -36,7 +47,10 @@ export const Route = createFileRoute("/_app/admin/employees/$empId/edit")({
   component: EditEmployee,
   notFoundComponent: () => (
     <div className="p-8 text-sm text-muted-foreground">
-      User not found. <Link to="/admin/employees" className="text-primary underline">Back to User Management</Link>
+      User not found.{" "}
+      <Link to="/admin/employees" className="text-primary underline">
+        Back to User Management
+      </Link>
     </div>
   ),
 });
@@ -50,8 +64,17 @@ function EditEmployee() {
     queryFn: () => getEmployee(empId),
   });
 
-  const { register, handleSubmit, watch, setValue, reset, formState: { errors, isSubmitting } } =
-    useForm<FormVals>({ resolver: zodResolver(schema), defaultValues: { isActive: true, role: "USER" } });
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<FormVals>({
+    resolver: zodResolver(schema),
+    defaultValues: { isActive: true, role: "USER" },
+  });
   const role = watch("role");
 
   useEffect(() => {
@@ -75,10 +98,15 @@ function EditEmployee() {
   const onSubmit = async (v: FormVals) => {
     const finalRole = v.role || employee?.role || "USER";
     await updateEmployee(empId, {
-      name: v.name, email: v.email, role: finalRole,
-      subRole: (finalRole === "USER" || finalRole === "ADMIN" ? null : (v.subRole as never)) ?? null,
+      name: v.name,
+      email: v.email,
+      role: finalRole,
+      subRole:
+        (finalRole === "USER" || finalRole === "ADMIN" ? null : (v.subRole as never)) ?? null,
       division: v.division ? (v.division as never) : undefined,
-      designation: v.designation, floor: v.floor, isActive: v.isActive,
+      designation: v.designation,
+      floor: v.floor,
+      isActive: v.isActive,
     });
     toast.success("User updated");
     qc.invalidateQueries({ queryKey: ["employees"] });
@@ -106,8 +134,16 @@ function EditEmployee() {
               <Input value={empId} readOnly disabled className="font-mono" />
             </Field>
             <Field label="Role" error={errors.role?.message}>
-              <Select value={role} onValueChange={(v) => { setValue("role", v as never); setValue("subRole", undefined); }}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+              <Select
+                value={role}
+                onValueChange={(v) => {
+                  setValue("role", v as never);
+                  setValue("subRole", undefined);
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="USER">User</SelectItem>
                   <SelectItem value="L2">L2</SelectItem>
@@ -118,34 +154,73 @@ function EditEmployee() {
             </Field>
             {(role === "L2" || role === "L3") && (
               <Field label="Sub Role" error={errors.subRole?.message}>
-                <Select value={watch("subRole") ?? ""} onValueChange={(v) => setValue("subRole", v)}>
-                  <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
+                <Select
+                  value={watch("subRole") ?? ""}
+                  onValueChange={(v) => setValue("subRole", v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
                   <SelectContent>
-                    {(role === "L2" ? L2_SUBROLES : L3_SUBROLES).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    {(role === "L2" ? L2_SUBROLES : L3_SUBROLES).map((s) => (
+                      <SelectItem key={s} value={s}>
+                        {s}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </Field>
             )}
-            <Field label="Name" error={errors.name?.message}><Input {...register("name")} /></Field>
-            <Field label="Email" error={errors.email?.message}><Input type="email" {...register("email")} /></Field>
+            <Field label="Name" error={errors.name?.message}>
+              <Input {...register("name")} />
+            </Field>
+            <Field label="Email" error={errors.email?.message}>
+              <Input type="email" {...register("email")} />
+            </Field>
             <Field label="Division" error={errors.division?.message}>
-              <Select value={watch("division") ?? ""} onValueChange={(v) => setValue("division", v)}>
-                <SelectTrigger><SelectValue placeholder="Select division" /></SelectTrigger>
-                <SelectContent>{DIVISIONS.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}</SelectContent>
+              <Select
+                value={watch("division") ?? ""}
+                onValueChange={(v) => setValue("division", v)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select division" />
+                </SelectTrigger>
+                <SelectContent>
+                  {DIVISIONS.map((d) => (
+                    <SelectItem key={d} value={d}>
+                      {d}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
             </Field>
-            <Field label="Designation" error={errors.designation?.message}><Input {...register("designation")} /></Field>
-            <Field label="Floor" error={errors.floor?.message}><Input placeholder="e.g. 5F" {...register("floor")} /></Field>
+            <Field label="Designation" error={errors.designation?.message}>
+              <Input {...register("designation")} />
+            </Field>
+            <Field label="Floor" error={errors.floor?.message}>
+              <Input placeholder="e.g. 5F" {...register("floor")} />
+            </Field>
             <div className="flex items-center justify-between rounded-md border border-border p-3">
               <div>
                 <div className="text-sm font-medium">Active</div>
                 <div className="text-xs text-muted-foreground">Inactive users cannot sign in.</div>
               </div>
-              <Switch checked={watch("isActive")} onCheckedChange={(c) => setValue("isActive", c)} />
+              <Switch
+                checked={watch("isActive")}
+                onCheckedChange={(c) => setValue("isActive", c)}
+              />
             </div>
             <div className="md:col-span-2 flex justify-end gap-2 pt-2">
-              <Button type="button" variant="outline" onClick={() => navigate({ to: "/admin/employees" })}>Cancel</Button>
-              <Button type="submit" disabled={isSubmitting}>Save changes</Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => navigate({ to: "/admin/employees" })}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                Save changes
+              </Button>
             </div>
           </form>
         </CardContent>
@@ -154,7 +229,15 @@ function EditEmployee() {
   );
 }
 
-function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
+function Field({
+  label,
+  error,
+  children,
+}: {
+  label: string;
+  error?: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="space-y-1.5">
       <Label>{label}</Label>

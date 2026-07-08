@@ -6,7 +6,8 @@ import {
   getChartsAnalytics,
   getSlaMetrics,
   getMisReport,
-  listAuditLogs
+  listAuditLogs,
+  getAssigneeAssignmentsReport
 } from "../controllers/reportController";
 import { authenticateToken, requireRole } from "../middleware/authMiddleware";
 
@@ -21,6 +22,7 @@ router.get("/analytics/charts", authenticateToken, requireRole(["ADMIN", "L3"]),
 // SLA and MIS endpoints
 router.get("/sla/metrics", authenticateToken, requireRole(["ADMIN", "L3"]), getSlaMetrics);
 router.get("/mis/report", authenticateToken, requireRole(["ADMIN", "L3"]), getMisReport);
+router.get("/assignee-assignments", authenticateToken, requireRole(["ADMIN", "L3"]), getAssigneeAssignmentsReport);
 
 // Audit logs (Admin/L3)
 router.get("/audit", authenticateToken, requireRole(["ADMIN", "L3"]), listAuditLogs);

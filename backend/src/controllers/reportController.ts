@@ -364,3 +364,92 @@ export async function listAuditLogs(req: AuthenticatedRequest, res: Response) {
     return res.status(500).json({ message: error.message || "Internal server error" });
   }
 }
+
+export async function getAssigneeAssignmentsReport(req: AuthenticatedRequest, res: Response) {
+  try {
+    const { assigneeId, assigneeName, fromDate, toDate } = req.query;
+    
+    if (!assigneeId && !assigneeName) {
+      return res.status(400).json({ message: "assigneeId or assigneeName is required" });
+    }
+    if (!fromDate || !toDate) {
+      return res.status(400).json({ message: "fromDate and toDate are required" });
+    }
+
+    let employee = null;
+    if (assigneeId) {
+      employee = await Employee.findOne({ empId: assigneeId });
+    } else if (assigneeName) {
+      const searchStr = assigneeName as string;
+      // Allow searching by either name or ID when passed via assigneeName
+      employee = await Employee.findOne({ 
+        $or: [
+          { empId: new RegExp(searchStr, "i") },
+          { name: new RegExp(searchStr, "i") }
+        ]
+      });
+    }
+
+    if (!employee) {
+      return res.status(404).json({ message: "Assignee not found" });
+    }
+
+    const from = new Date(fromDate as string);
+    const to = new Date(toDate as string);
+    to.setHours(23, 59, 59, 999);
+
+    const tickets = await Ticket.find({
+      currentAssignee: employee.empId,
+      $or: [
+        { assignedAt: { $gte: from, $lte: to } },
+        { createdAt: { $gte: from, $lte: to } }
+      ]
+    });
+
+    const reportTickets = await Promise.all(tickets.map(async (t) => {
+      const { TrailLog } = await import("../models/TrailLog");
+      const actions = await TrailLog.find({ ticketId: t.ticketId, performedBy: employee.empId }).sort({ createdAt: 1 });
+      
+      const assigneeActions = actions.map(a => {
+        let text = a.action;
+        if (a.comment) text += `: ${a.comment}`;
+        if (a.action === "Status Change" && a.previousStatus && a.currentStatus) {
+            text += ` (${a.previousStatus} -> ${a.currentStatus})`;
+        }
+        return {
+          action: a.action,
+          comment: a.comment,
+          timestamp: a.createdAt,
+          formatted: text
+        };
+      });
+
+      return {
+        ticketId: t.ticketId,
+        summary: t.summary,
+        assignedAt: t.assignedAt || t.createdAt,
+        assignedBy: { 
+            name: t.createdByName, 
+            role: t.createdBy === employee.empId ? employee.role : "System" 
+        },
+        status: t.currentStatus,
+        assigneeActions
+      };
+    }));
+
+    return res.json({
+      assignee: { 
+          userId: employee.empId, 
+          name: employee.name, 
+          role: employee.role, 
+          subrole: employee.subRole 
+      },
+      fromDate, 
+      toDate, 
+      tickets: reportTickets
+    });
+  } catch (error: any) {
+    console.error("Assignee assignments report error:", error);
+    return res.status(500).json({ message: error.message || "Internal server error" });
+  }
+}

@@ -9,7 +9,12 @@ const styles: Record<Priority, string> = {
 
 export function PriorityBadge({ priority }: { priority: Priority }) {
   return (
-    <span className={cn("inline-flex items-center rounded-md border px-2 py-0.5 text-xs", styles[priority])}>
+    <span
+      className={cn(
+        "inline-flex items-center rounded-md border px-2 py-0.5 text-xs",
+        styles[priority],
+      )}
+    >
       {priority}
     </span>
   );

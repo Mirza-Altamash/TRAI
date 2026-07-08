@@ -81,10 +81,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "TRAI Complaint & Workflow Portal" },
-      { name: "description", content: "Internal Complaint & Workflow Management Portal for the Telecom Regulatory Authority of India." },
+      {
+        name: "description",
+        content:
+          "Internal Complaint & Workflow Management Portal for the Telecom Regulatory Authority of India.",
+      },
       { name: "author", content: "Telecom Regulatory Authority of India" },
       { property: "og:title", content: "TRAI Complaint & Workflow Portal" },
-      { property: "og:description", content: "Internal portal for ticketing, workflow, and reporting at TRAI." },
+      {
+        property: "og:description",
+        content: "Internal portal for ticketing, workflow, and reporting at TRAI.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -107,7 +114,9 @@ function RootShell({ children }: { children: ReactNode }) {
       <head>
         <HeadContent />
         {/* Anti-flash theme inline injection script */}
-        <script dangerouslySetInnerHTML={{ __html: `
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
           (function() {
             try {
               var saved = localStorage.getItem('theme');
@@ -116,7 +125,9 @@ function RootShell({ children }: { children: ReactNode }) {
               document.documentElement.classList.add(theme);
             } catch (e) {}
           })();
-        ` }} />
+        `,
+          }}
+        />
       </head>
       <body>
         {children}

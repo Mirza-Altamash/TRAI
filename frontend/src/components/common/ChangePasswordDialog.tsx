@@ -1,4 +1,11 @@
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,18 +16,33 @@ import { toast } from "sonner";
 
 import { changePassword } from "@/services/mock";
 
-const schema = z.object({
-  current: z.string().min(1, "Required"),
-  next: z.string().min(8, "Min 8 characters")
-    .regex(/[A-Z]/, "Must include uppercase")
-    .regex(/[0-9]/, "Must include a number"),
-  confirm: z.string(),
-}).refine(d => d.next === d.confirm, { path: ["confirm"], message: "Passwords don't match" });
+const schema = z
+  .object({
+    current: z.string().min(1, "Required"),
+    next: z
+      .string()
+      .min(8, "Min 8 characters")
+      .regex(/[A-Z]/, "Must include uppercase")
+      .regex(/[0-9]/, "Must include a number"),
+    confirm: z.string(),
+  })
+  .refine((d) => d.next === d.confirm, { path: ["confirm"], message: "Passwords don't match" });
 
 type FormVals = z.infer<typeof schema>;
 
-export function ChangePasswordDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
-  const { register, handleSubmit, formState: { errors }, reset } = useForm<FormVals>({ resolver: zodResolver(schema) });
+export function ChangePasswordDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+}) {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<FormVals>({ resolver: zodResolver(schema) });
   const onSubmit = async (v: FormVals) => {
     try {
       await changePassword(v.current, v.next);
@@ -36,7 +58,9 @@ export function ChangePasswordDialog({ open, onOpenChange }: { open: boolean; on
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Change Password</DialogTitle>
-          <DialogDescription>Update your account password. Min 8 characters with an uppercase letter and a number.</DialogDescription>
+          <DialogDescription>
+            Update your account password. Min 8 characters with an uppercase letter and a number.
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-1.5">
@@ -55,7 +79,9 @@ export function ChangePasswordDialog({ open, onOpenChange }: { open: boolean; on
             {errors.confirm && <p className="text-xs text-destructive">{errors.confirm.message}</p>}
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
             <Button type="submit">Update password</Button>
           </DialogFooter>
         </form>

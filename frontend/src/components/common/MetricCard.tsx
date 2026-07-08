@@ -3,11 +3,19 @@ import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
 
 export function MetricCard({
-  label, value, icon: Icon, accent = "primary", onClick, hint,
+  label,
+  value,
+  icon: Icon,
+  accent = "primary",
+  onClick,
+  hint,
 }: {
-  label: string; value: number | string; icon?: LucideIcon;
+  label: string;
+  value: number | string;
+  icon?: LucideIcon;
   accent?: "primary" | "success" | "warn" | "info" | "destructive";
-  onClick?: () => void; hint?: string;
+  onClick?: () => void;
+  hint?: string;
 }) {
   const accentMap = {
     primary: "text-primary bg-primary-soft",
@@ -20,13 +28,19 @@ export function MetricCard({
     <Card
       className={cn(
         "cursor-default",
-        onClick && "cursor-pointer hover:border-primary/60 dark:hover:border-primary/40 hover:shadow-[6px_6px_0px_0px_rgba(0,68,139,0.2)] dark:hover:shadow-[6px_6px_0px_0px_rgba(255,255,255,0.1)] active:translate-y-0 active:translate-x-0"
+        onClick &&
+          "cursor-pointer hover:border-primary/60 dark:hover:border-primary/40 hover:shadow-[6px_6px_0px_0px_rgba(0,68,139,0.2)] dark:hover:shadow-[6px_6px_0px_0px_rgba(255,255,255,0.1)] active:translate-y-0 active:translate-x-0",
       )}
       onClick={onClick}
     >
       <CardContent className="flex items-center gap-4 py-5">
         {Icon && (
-          <div className={cn("flex h-11 w-11 items-center justify-center rounded-md", accentMap[accent])}>
+          <div
+            className={cn(
+              "flex h-11 w-11 items-center justify-center rounded-md",
+              accentMap[accent],
+            )}
+          >
             <Icon className="h-5 w-5" />
           </div>
         )}
