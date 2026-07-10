@@ -51,6 +51,15 @@ export interface Ticket {
   resolvedAt?: string;
   closedAt?: string;
   autoCloseEligible?: boolean;
+  isPriority?: boolean;
+  priorityMarkedBy?: {
+    userId: string;
+    name: string;
+    role: string;
+    subrole?: string;
+    reason?: string;
+    markedAt: string;
+  }[];
 }
 
 export type TrailAction = string;
@@ -103,7 +112,9 @@ export type AuditAction =
   | "Status Change"
   | "Resolve"
   | "Close"
-  | "Export";
+  | "Export"
+  | "Mark Priority"
+  | "Remove Priority";
 
 export interface AuditLog {
   id: string;

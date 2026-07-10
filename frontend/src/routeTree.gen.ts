@@ -18,6 +18,7 @@ import { Route as AppTicketsTicketIdRouteImport } from './routes/_app.tickets.$t
 import { Route as AppL3TicketsRouteImport } from './routes/_app.l3.tickets'
 import { Route as AppL3RaisedRouteImport } from './routes/_app.l3.raised'
 import { Route as AppL3ProfileRouteImport } from './routes/_app.l3.profile'
+import { Route as AppL3PriorityRouteImport } from './routes/_app.l3.priority'
 import { Route as AppL3DashboardRouteImport } from './routes/_app.l3.dashboard'
 import { Route as AppL3AssignmentsRouteImport } from './routes/_app.l3.assignments'
 import { Route as AppL2RaisedRouteImport } from './routes/_app.l2.raised'
@@ -27,6 +28,7 @@ import { Route as AppL2AssignmentsRouteImport } from './routes/_app.l2.assignmen
 import { Route as AppAdminTotalticketRouteImport } from './routes/_app.admin.totalticket'
 import { Route as AppAdminSlaRouteImport } from './routes/_app.admin.sla'
 import { Route as AppAdminReportsRouteImport } from './routes/_app.admin.reports'
+import { Route as AppAdminPriorityRouteImport } from './routes/_app.admin.priority'
 import { Route as AppAdminMisRouteImport } from './routes/_app.admin.mis'
 import { Route as AppAdminL3TicketsRouteImport } from './routes/_app.admin.l3-tickets'
 import { Route as AppAdminDashboardRouteImport } from './routes/_app.admin.dashboard'
@@ -85,6 +87,11 @@ const AppL3ProfileRoute = AppL3ProfileRouteImport.update({
   path: '/l3/profile',
   getParentRoute: () => AppRoute,
 } as any)
+const AppL3PriorityRoute = AppL3PriorityRouteImport.update({
+  id: '/l3/priority',
+  path: '/l3/priority',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppL3DashboardRoute = AppL3DashboardRouteImport.update({
   id: '/l3/dashboard',
   path: '/l3/dashboard',
@@ -128,6 +135,11 @@ const AppAdminSlaRoute = AppAdminSlaRouteImport.update({
 const AppAdminReportsRoute = AppAdminReportsRouteImport.update({
   id: '/admin/reports',
   path: '/admin/reports',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAdminPriorityRoute = AppAdminPriorityRouteImport.update({
+  id: '/admin/priority',
+  path: '/admin/priority',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAdminMisRoute = AppAdminMisRouteImport.update({
@@ -205,6 +217,7 @@ export interface FileRoutesByFullPath {
   '/admin/dashboard': typeof AppAdminDashboardRoute
   '/admin/l3-tickets': typeof AppAdminL3TicketsRoute
   '/admin/mis': typeof AppAdminMisRoute
+  '/admin/priority': typeof AppAdminPriorityRoute
   '/admin/reports': typeof AppAdminReportsRoute
   '/admin/sla': typeof AppAdminSlaRoute
   '/admin/totalticket': typeof AppAdminTotalticketRoute
@@ -214,6 +227,7 @@ export interface FileRoutesByFullPath {
   '/l2/raised': typeof AppL2RaisedRoute
   '/l3/assignments': typeof AppL3AssignmentsRoute
   '/l3/dashboard': typeof AppL3DashboardRoute
+  '/l3/priority': typeof AppL3PriorityRoute
   '/l3/profile': typeof AppL3ProfileRoute
   '/l3/raised': typeof AppL3RaisedRoute
   '/l3/tickets': typeof AppL3TicketsRoute
@@ -237,6 +251,7 @@ export interface FileRoutesByTo {
   '/admin/dashboard': typeof AppAdminDashboardRoute
   '/admin/l3-tickets': typeof AppAdminL3TicketsRoute
   '/admin/mis': typeof AppAdminMisRoute
+  '/admin/priority': typeof AppAdminPriorityRoute
   '/admin/reports': typeof AppAdminReportsRoute
   '/admin/sla': typeof AppAdminSlaRoute
   '/admin/totalticket': typeof AppAdminTotalticketRoute
@@ -246,6 +261,7 @@ export interface FileRoutesByTo {
   '/l2/raised': typeof AppL2RaisedRoute
   '/l3/assignments': typeof AppL3AssignmentsRoute
   '/l3/dashboard': typeof AppL3DashboardRoute
+  '/l3/priority': typeof AppL3PriorityRoute
   '/l3/profile': typeof AppL3ProfileRoute
   '/l3/raised': typeof AppL3RaisedRoute
   '/l3/tickets': typeof AppL3TicketsRoute
@@ -271,6 +287,7 @@ export interface FileRoutesById {
   '/_app/admin/dashboard': typeof AppAdminDashboardRoute
   '/_app/admin/l3-tickets': typeof AppAdminL3TicketsRoute
   '/_app/admin/mis': typeof AppAdminMisRoute
+  '/_app/admin/priority': typeof AppAdminPriorityRoute
   '/_app/admin/reports': typeof AppAdminReportsRoute
   '/_app/admin/sla': typeof AppAdminSlaRoute
   '/_app/admin/totalticket': typeof AppAdminTotalticketRoute
@@ -280,6 +297,7 @@ export interface FileRoutesById {
   '/_app/l2/raised': typeof AppL2RaisedRoute
   '/_app/l3/assignments': typeof AppL3AssignmentsRoute
   '/_app/l3/dashboard': typeof AppL3DashboardRoute
+  '/_app/l3/priority': typeof AppL3PriorityRoute
   '/_app/l3/profile': typeof AppL3ProfileRoute
   '/_app/l3/raised': typeof AppL3RaisedRoute
   '/_app/l3/tickets': typeof AppL3TicketsRoute
@@ -305,6 +323,7 @@ export interface FileRouteTypes {
     | '/admin/dashboard'
     | '/admin/l3-tickets'
     | '/admin/mis'
+    | '/admin/priority'
     | '/admin/reports'
     | '/admin/sla'
     | '/admin/totalticket'
@@ -314,6 +333,7 @@ export interface FileRouteTypes {
     | '/l2/raised'
     | '/l3/assignments'
     | '/l3/dashboard'
+    | '/l3/priority'
     | '/l3/profile'
     | '/l3/raised'
     | '/l3/tickets'
@@ -337,6 +357,7 @@ export interface FileRouteTypes {
     | '/admin/dashboard'
     | '/admin/l3-tickets'
     | '/admin/mis'
+    | '/admin/priority'
     | '/admin/reports'
     | '/admin/sla'
     | '/admin/totalticket'
@@ -346,6 +367,7 @@ export interface FileRouteTypes {
     | '/l2/raised'
     | '/l3/assignments'
     | '/l3/dashboard'
+    | '/l3/priority'
     | '/l3/profile'
     | '/l3/raised'
     | '/l3/tickets'
@@ -370,6 +392,7 @@ export interface FileRouteTypes {
     | '/_app/admin/dashboard'
     | '/_app/admin/l3-tickets'
     | '/_app/admin/mis'
+    | '/_app/admin/priority'
     | '/_app/admin/reports'
     | '/_app/admin/sla'
     | '/_app/admin/totalticket'
@@ -379,6 +402,7 @@ export interface FileRouteTypes {
     | '/_app/l2/raised'
     | '/_app/l3/assignments'
     | '/_app/l3/dashboard'
+    | '/_app/l3/priority'
     | '/_app/l3/profile'
     | '/_app/l3/raised'
     | '/_app/l3/tickets'
@@ -466,6 +490,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppL3ProfileRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/l3/priority': {
+      id: '/_app/l3/priority'
+      path: '/l3/priority'
+      fullPath: '/l3/priority'
+      preLoaderRoute: typeof AppL3PriorityRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/l3/dashboard': {
       id: '/_app/l3/dashboard'
       path: '/l3/dashboard'
@@ -527,6 +558,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/reports'
       fullPath: '/admin/reports'
       preLoaderRoute: typeof AppAdminReportsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/admin/priority': {
+      id: '/_app/admin/priority'
+      path: '/admin/priority'
+      fullPath: '/admin/priority'
+      preLoaderRoute: typeof AppAdminPriorityRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/admin/mis': {
@@ -629,6 +667,7 @@ interface AppRouteChildren {
   AppAdminDashboardRoute: typeof AppAdminDashboardRoute
   AppAdminL3TicketsRoute: typeof AppAdminL3TicketsRoute
   AppAdminMisRoute: typeof AppAdminMisRoute
+  AppAdminPriorityRoute: typeof AppAdminPriorityRoute
   AppAdminReportsRoute: typeof AppAdminReportsRoute
   AppAdminSlaRoute: typeof AppAdminSlaRoute
   AppAdminTotalticketRoute: typeof AppAdminTotalticketRoute
@@ -638,6 +677,7 @@ interface AppRouteChildren {
   AppL2RaisedRoute: typeof AppL2RaisedRoute
   AppL3AssignmentsRoute: typeof AppL3AssignmentsRoute
   AppL3DashboardRoute: typeof AppL3DashboardRoute
+  AppL3PriorityRoute: typeof AppL3PriorityRoute
   AppL3ProfileRoute: typeof AppL3ProfileRoute
   AppL3RaisedRoute: typeof AppL3RaisedRoute
   AppL3TicketsRoute: typeof AppL3TicketsRoute
@@ -660,6 +700,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAdminDashboardRoute: AppAdminDashboardRoute,
   AppAdminL3TicketsRoute: AppAdminL3TicketsRoute,
   AppAdminMisRoute: AppAdminMisRoute,
+  AppAdminPriorityRoute: AppAdminPriorityRoute,
   AppAdminReportsRoute: AppAdminReportsRoute,
   AppAdminSlaRoute: AppAdminSlaRoute,
   AppAdminTotalticketRoute: AppAdminTotalticketRoute,
@@ -669,6 +710,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppL2RaisedRoute: AppL2RaisedRoute,
   AppL3AssignmentsRoute: AppL3AssignmentsRoute,
   AppL3DashboardRoute: AppL3DashboardRoute,
+  AppL3PriorityRoute: AppL3PriorityRoute,
   AppL3ProfileRoute: AppL3ProfileRoute,
   AppL3RaisedRoute: AppL3RaisedRoute,
   AppL3TicketsRoute: AppL3TicketsRoute,

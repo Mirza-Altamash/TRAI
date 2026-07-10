@@ -20,6 +20,7 @@ import {
   ChevronDown,
   ChevronRight,
   Folder,
+  Star,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -33,6 +34,7 @@ const NAV: Record<Role, NavItem[]> = {
   ADMIN: [
     { to: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { to: "/admin/totalticket", label: "Total Tickets", icon: Inbox },
+    { to: "/admin/priority", label: "Priority Tickets", icon: Star },
     { to: "/admin/employees", label: "Employees", icon: Users },
     { to: "/admin/analytics", label: "Analytics", icon: BarChart3 },
     { to: "/admin/reports", label: "Reports & Export", icon: FileText },
@@ -63,7 +65,7 @@ export function Sidebar({ role }: { role: Role }) {
 
   let items = NAV[role];
   if (role === "L3") {
-    const adminItems = NAV.ADMIN.filter((item) => item.to !== "/admin/sla");
+    const adminItems = NAV.ADMIN.filter((item) => item.to !== "/admin/sla" && item.to !== "/admin/priority");
     items = [...adminItems];
   } else if (role === "ADMIN") {
     items = NAV.ADMIN.filter((item) => item.to !== "/admin/sla");
@@ -100,6 +102,7 @@ export function Sidebar({ role }: { role: Role }) {
     { to: "/l3/assignments", label: "My Assignments", icon: ListChecks },
     { to: "/admin/tickets/new", label: "Raise Ticket", icon: PlusCircle },
     { to: "/l3/raised", label: "My Raised Tickets", icon: Inbox },
+    { to: "/l3/priority", label: "My Priority Tickets", icon: Star },
   ];
 
   const shouldBeOpen = isReportsOpen || hasActiveSubItem;

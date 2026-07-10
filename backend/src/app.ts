@@ -27,6 +27,7 @@ app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
 import { authenticateToken } from "./middleware/authMiddleware";
 import { exportExcelController, exportPdfController } from "./controllers/ticketController";
+import { getAdminPriorityTickets } from "./controllers/priorityController";
 
 // Register routers
 app.use("/api/auth", authRoutes);
@@ -38,6 +39,7 @@ app.use("/api", reportRoutes);
 
 app.get("/api/user/my-tickets/export/excel", authenticateToken, exportExcelController);
 app.get("/api/user/my-tickets/export/pdf", authenticateToken, exportPdfController);
+app.get("/api/admin/priority-tickets", authenticateToken, getAdminPriorityTickets);
 
 // API health endpoint
 app.get("/api/health", (req: Request, res: Response) => {

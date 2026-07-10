@@ -13,7 +13,7 @@ import { StatusBadge } from "./StatusBadge";
 import { PriorityBadge } from "./PriorityBadge";
 import { EmptyState } from "./EmptyState";
 import { formatIstDate } from "@/lib/format";
-import { Eye } from "lucide-react";
+import { Eye, Star } from "lucide-react";
 import type { Ticket } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -21,6 +21,7 @@ export function TicketTable({
   rows,
   showCreatedBy = true,
   showAssignee = true,
+  showPriorityDetails = false,
   markNewAll = false,
   onRowClick,
   selectedTicketId,
@@ -28,6 +29,7 @@ export function TicketTable({
   rows: Ticket[];
   showCreatedBy?: boolean;
   showAssignee?: boolean;
+  showPriorityDetails?: boolean;
   markNewAll?: boolean;
   onRowClick?: (ticket: Ticket) => void;
   selectedTicketId?: string;
@@ -45,7 +47,15 @@ export function TicketTable({
           {showAssignee && <TableHead>Assignee</TableHead>}
           <TableHead>Priority</TableHead>
           <TableHead>Status</TableHead>
-          <TableHead>Created</TableHead>
+          {showPriorityDetails ? (
+            <>
+              <TableHead>Marked By</TableHead>
+              <TableHead>Reason</TableHead>
+              <TableHead>Marked Date</TableHead>
+            </>
+          ) : (
+            <TableHead>Created</TableHead>
+          )}
           <TableHead className="w-16 text-right">Actions</TableHead>
         </TableRow>
       </TableHeader>
@@ -62,6 +72,11 @@ export function TicketTable({
           >
             <TableCell className="font-mono text-xs">
               <span className="inline-flex items-center gap-1.5">
+                {t.isPriority && (
+                  <Badge variant="default" className="h-4 px-1 bg-amber-500 hover:bg-amber-600 border-transparent text-white" title="Priority Ticket">
+                    <Star className="h-3 w-3 fill-current" />
+                  </Badge>
+                )}
                 {t.ticketId}
                 {markNewAll && (
                   <Badge className="h-4 px-1.5 text-[10px] font-semibold uppercase">New</Badge>
@@ -78,7 +93,21 @@ export function TicketTable({
             <TableCell>
               <StatusBadge status={t.currentStatus} />
             </TableCell>
-            <TableCell className="text-muted-foreground">{formatIstDate(t.createdAt)}</TableCell>
+            {showPriorityDetails ? (
+              <>
+                <TableCell className="max-w-[120px] truncate">
+                  {t.priorityMarkedBy?.map((p) => p.name).join(", ") || "—"}
+                </TableCell>
+                <TableCell className="max-w-[120px] truncate">
+                  {t.priorityMarkedBy?.[0]?.reason || "—"}
+                </TableCell>
+                <TableCell className="text-muted-foreground">
+                  {t.priorityMarkedBy?.[0]?.markedAt ? formatIstDate(t.priorityMarkedBy[0].markedAt) : "—"}
+                </TableCell>
+              </>
+            ) : (
+              <TableCell className="text-muted-foreground">{formatIstDate(t.createdAt)}</TableCell>
+            )}
             <TableCell className="text-right">
               {onRowClick ? (
                 <Button

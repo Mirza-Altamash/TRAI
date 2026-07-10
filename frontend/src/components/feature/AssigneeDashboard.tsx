@@ -7,39 +7,76 @@ import { Button } from "@/components/ui/button";
 import { Link, useRouter } from "@tanstack/react-router";
 import { useCurrentUser } from "@/lib/auth";
 import { getAssigneeMetrics, listTickets } from "@/services/mock";
-import { Activity, Clock, CheckCircle2, XCircle, PlusCircle } from "lucide-react";
-import { useState } from "react";
+import { getMyPriorityTickets, getPersonalPriorityCount } from "@/services/ticketApi";
+import { Activity, Clock, CheckCircle2, XCircle, PlusCircle, Star } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import type { TicketStatus } from "@/types";
 
 export function AssigneeDashboard({ label }: { label: "L2" | "L3" }) {
   const user = useCurrentUser();
   const router = useRouter();
-  const [statusFilter, setStatusFilter] = useState<TicketStatus | null>(null);
+  const qc = useQueryClient();
+  const [statusFilter, setStatusFilter] = useState<TicketStatus | "Priority" | null>(null);
 
   const { data: m } = useQuery({
     queryKey: [label, "metrics", user.empId],
     queryFn: () => getAssigneeMetrics(user.empId),
   });
-  const { data: recent } = useQuery({
-    queryKey: [
-      "tickets",
-      {
-        assignee: user.empId,
-        status: statusFilter ?? undefined,
-        page: 1,
-        pageSize: statusFilter ? 50 : 8,
-      },
-    ],
-    queryFn: () =>
-      listTickets({
-        assignee: user.empId,
-        status: statusFilter ?? undefined,
-        page: 1,
-        pageSize: statusFilter ? 50 : 8,
-      }),
+
+  const { data: priorityCountData } = useQuery({
+    queryKey: ["priority-count", "my", user.empId],
+    queryFn: getPersonalPriorityCount,
+    enabled: label === "L3",
   });
 
-  const toggleFilter = (status: TicketStatus) => {
+  const isPriorityFilter = statusFilter === "Priority";
+
+  const { data: recent } = useQuery({
+    queryKey: isPriorityFilter
+      ? ["priority-tickets", "my", user.empId, { page: 1, pageSize: 50 }]
+      : [
+          "tickets",
+          {
+            assignee: user.empId,
+            status: statusFilter ?? undefined,
+            page: 1,
+            pageSize: statusFilter ? 50 : 8,
+          },
+        ],
+    queryFn: () =>
+      isPriorityFilter
+        ? getMyPriorityTickets({ page: 1, pageSize: 50 })
+        : listTickets({
+            assignee: user.empId,
+            status: statusFilter ?? undefined,
+            page: 1,
+            pageSize: statusFilter ? 50 : 8,
+          }),
+  });
+
+  useEffect(() => {
+    let active = true;
+    import("@/lib/socketClient").then(({ getSocket }) => {
+      if (!active) return;
+      const socket = getSocket();
+      if (socket) {
+        const onPriorityUpdated = () => {
+          qc.invalidateQueries({ queryKey: ["priority-count", "my", user.empId] });
+          qc.invalidateQueries({ queryKey: ["priority-tickets", "my", user.empId] });
+        };
+        socket.on("ticket:priority-updated", onPriorityUpdated);
+        return () => {
+          socket.off("ticket:priority-updated", onPriorityUpdated);
+        };
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, [qc, user.empId]);
+
+  const toggleFilter = (status: TicketStatus | "Priority") => {
     setStatusFilter((prev) => (prev === status ? null : status));
   };
 
@@ -60,7 +97,7 @@ export function AssigneeDashboard({ label }: { label: "L2" | "L3" }) {
           ) : undefined
         }
       />
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+      <div className={label === "L3" ? "grid grid-cols-2 gap-4 md:grid-cols-4" : "grid grid-cols-2 gap-4 md:grid-cols-3"}>
         <MetricCard
           label="Open"
           value={m?.open ?? "—"}
@@ -85,6 +122,16 @@ export function AssigneeDashboard({ label }: { label: "L2" | "L3" }) {
           onClick={() => toggleFilter("Closed")}
           hint={statusFilter === "Closed" ? "Filter active" : undefined}
         />
+        {label === "L3" && (
+          <MetricCard
+            label="My Priority"
+            value={priorityCountData?.count ?? "—"}
+            icon={Star}
+            accent="warn"
+            onClick={() => toggleFilter("Priority")}
+            hint={statusFilter === "Priority" ? "Filter active" : undefined}
+          />
+        )}
       </div>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between py-4">
@@ -106,6 +153,7 @@ export function AssigneeDashboard({ label }: { label: "L2" | "L3" }) {
           <TicketTable
             rows={recent?.rows ?? []}
             showAssignee={false}
+            showPriorityDetails={isPriorityFilter}
             onRowClick={(t) => router.navigate({ to: `/tickets/${t.ticketId}` })}
           />
         </CardContent>

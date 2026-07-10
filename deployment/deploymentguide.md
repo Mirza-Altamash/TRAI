@@ -42,3 +42,6 @@ mongorestore --db trai_citizen_hub backup_folder/trai_citizen_hub/
 - **CORS errors:** Ensure CLIENT_URL and CORS_ORIGIN in backend\.env match http://192.168.7.251:8085.
 - **MongoDB connection:** Ensure MongoDB is running on 127.0.0.1:27017.
 - **Port conflicts:** Use `netstat -ano | findstr :8085` or `:5002`, then kill conflicting PIDs.
+
+
+<!-- mirza -->

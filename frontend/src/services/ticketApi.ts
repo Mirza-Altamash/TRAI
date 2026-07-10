@@ -15,6 +15,8 @@ export interface TicketQuery {
   updatedTo?: string;
   page?: number;
   pageSize?: number;
+  isPriority?: "true" | "false" | "all";
+  markedBy?: string;
 }
 
 export async function listTickets(q: TicketQuery = {}): Promise<Paginated<Ticket>> {
@@ -144,5 +146,35 @@ export async function reopenTicket(
     }
   }
   const res = await apiClient.post<Ticket>(`/tickets/${ticketId}/reopen`, fd);
+  return res.data;
+}
+
+export async function markTicketPriority(ticketId: string, reason: string): Promise<Ticket> {
+  const res = await apiClient.post<Ticket>(`/tickets/${ticketId}/priority`, { reason });
+  return res.data;
+}
+
+export async function removeTicketPriority(ticketId: string): Promise<Ticket> {
+  const res = await apiClient.delete<Ticket>(`/tickets/${ticketId}/priority`);
+  return res.data;
+}
+
+export async function getMyPriorityTickets(q: TicketQuery = {}): Promise<Paginated<Ticket>> {
+  const res = await apiClient.get<Paginated<Ticket>>("/tickets/priority/my", { params: q });
+  return res.data;
+}
+
+export async function getAdminPriorityTickets(q: TicketQuery = {}): Promise<Paginated<Ticket>> {
+  const res = await apiClient.get<Paginated<Ticket>>("/admin/priority-tickets", { params: q });
+  return res.data;
+}
+
+export async function getGlobalPriorityCount(): Promise<{ count: number }> {
+  const res = await apiClient.get<{ count: number }>("/tickets/priority/global-count");
+  return res.data;
+}
+
+export async function getPersonalPriorityCount(): Promise<{ count: number }> {
+  const res = await apiClient.get<{ count: number }>("/tickets/priority/my-count");
   return res.data;
 }

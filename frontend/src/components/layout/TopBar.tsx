@@ -46,8 +46,21 @@ export function TopBar() {
           });
         };
         socket.on("notification", handleNotif);
+
+        const invalidatePriorityLists = () => {
+          qc.invalidateQueries({ queryKey: ["tickets"] });
+          qc.invalidateQueries({ queryKey: ["admin", "priority-total"] });
+          qc.invalidateQueries({ queryKey: ["l3", "priority-total"] });
+        };
+        socket.on("ticket:priority-marked", invalidatePriorityLists);
+        socket.on("ticket:priority-removed", invalidatePriorityLists);
+        socket.on("ticket:priority-cleared-on-close", invalidatePriorityLists);
+
         return () => {
           socket.off("notification", handleNotif);
+          socket.off("ticket:priority-marked", invalidatePriorityLists);
+          socket.off("ticket:priority-removed", invalidatePriorityLists);
+          socket.off("ticket:priority-cleared-on-close", invalidatePriorityLists);
         };
       }
     });

@@ -30,6 +30,15 @@ export interface ITicket extends Document {
   autoCloseEligible?: boolean;
   createdAt: Date;
   updatedAt: Date;
+  isPriority?: boolean;
+  priorityMarkedBy?: {
+    userId: string;
+    name: string;
+    role: string;
+    subrole?: string;
+    reason?: string;
+    markedAt: Date;
+  }[];
 }
 
 const AttachmentSchema = new Schema<IAttachment>({
@@ -60,7 +69,18 @@ const TicketSchema = new Schema<ITicket>(
     assignedAt: { type: Date },
     resolvedAt: { type: Date },
     closedAt: { type: Date },
-    autoCloseEligible: { type: Boolean, default: false }
+    autoCloseEligible: { type: Boolean, default: false },
+    isPriority: { type: Boolean, default: false },
+    priorityMarkedBy: [
+      {
+        userId: { type: String, required: true },
+        name: { type: String, required: true },
+        role: { type: String, required: true },
+        subrole: { type: String },
+        reason: { type: String },
+        markedAt: { type: Date, default: Date.now }
+      }
+    ]
   },
   { timestamps: true }
 );

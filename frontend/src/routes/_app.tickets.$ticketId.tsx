@@ -37,6 +37,7 @@ import {
   deleteTicket,
   reopenTicket,
 } from "@/services/mock";
+import { markTicketPriority, removeTicketPriority } from "@/services/ticketApi";
 import { useCurrentUser } from "@/lib/auth";
 import { formatIstDateTime } from "@/lib/format";
 import { L2_SUBROLES, L3_SUBROLES } from "@/types";
@@ -55,8 +56,10 @@ import {
   Download,
   FileArchive,
   Image as FileIconImage,
+  Star,
 } from "lucide-react";
 import { exportTrailToExcel, exportTrailToPdf } from "@/lib/trail-export";
+import { getSocket } from "@/lib/socketClient";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -86,6 +89,48 @@ function TicketDetail() {
     queryKey: ["ticket", ticketId],
     queryFn: () => getTicket(ticketId),
   });
+  const [priorityModalOpen, setPriorityModalOpen] = useState(false);
+  const [priorityReason, setPriorityReason] = useState("");
+  const [isPriorityLoading, setIsPriorityLoading] = useState(false);
+
+  useEffect(() => {
+    const socket = getSocket();
+    if (!socket) return;
+
+    const onPriorityMarked = (data: any) => {
+      if (data.ticketId === ticketId) {
+        qc.invalidateQueries({ queryKey: ["ticket", ticketId] });
+      }
+    };
+    const onPriorityRemoved = (data: any) => {
+      if (data.ticketId === ticketId) {
+        qc.invalidateQueries({ queryKey: ["ticket", ticketId] });
+      }
+    };
+    const onPriorityCleared = (data: any) => {
+      if (data.ticketId === ticketId) {
+        qc.invalidateQueries({ queryKey: ["ticket", ticketId] });
+      }
+    };
+    const onTrailUpdated = (data: any) => {
+      if (data.ticketId === ticketId) {
+        qc.invalidateQueries({ queryKey: ["trail", ticketId] });
+      }
+    };
+
+    socket.on("ticket:priority-marked", onPriorityMarked);
+    socket.on("ticket:priority-removed", onPriorityRemoved);
+    socket.on("ticket:priority-cleared-on-close", onPriorityCleared);
+    socket.on("ticket:trail-updated", onTrailUpdated);
+
+    return () => {
+      socket.off("ticket:priority-marked", onPriorityMarked);
+      socket.off("ticket:priority-removed", onPriorityRemoved);
+      socket.off("ticket:priority-cleared-on-close", onPriorityCleared);
+      socket.off("ticket:trail-updated", onTrailUpdated);
+    };
+  }, [ticketId, qc]);
+
   if (t === undefined) return null;
   if (t === null) throw notFound();
   const isL3 = user.role === "L3";
@@ -95,6 +140,7 @@ function TicketDetail() {
   const isClosed = t!.currentStatus === "Closed";
   const showManage = !isClosed;
   const showTrailInDetails = isAdmin || isL2 || isL3;
+  const hasMarkedPriority = t!.priorityMarkedBy?.some(p => p.userId === user.empId);
 
   const onDelete = async () => {
     try {
@@ -104,6 +150,36 @@ function TicketDetail() {
       router.navigate({ to: "/admin/dashboard" });
     } catch (e: any) {
       toast.error(e.response?.data?.message || "Failed to delete ticket.");
+    }
+  };
+
+  const onMarkPriority = async () => {
+    setIsPriorityLoading(true);
+    try {
+      await markTicketPriority(ticketId, priorityReason);
+      toast.success("Ticket marked as Priority successfully.");
+      setPriorityModalOpen(false);
+      setPriorityReason("");
+      qc.invalidateQueries({ queryKey: ["ticket", ticketId] });
+      qc.invalidateQueries({ queryKey: ["tickets"] });
+    } catch (e: any) {
+      toast.error(e.response?.data?.message || "Failed to mark priority.");
+    } finally {
+      setIsPriorityLoading(false);
+    }
+  };
+
+  const onRemovePriority = async () => {
+    setIsPriorityLoading(true);
+    try {
+      await removeTicketPriority(ticketId);
+      toast.success("Priority removed successfully.");
+      qc.invalidateQueries({ queryKey: ["ticket", ticketId] });
+      qc.invalidateQueries({ queryKey: ["tickets"] });
+    } catch (e: any) {
+      toast.error(e.response?.data?.message || "Failed to remove priority.");
+    } finally {
+      setIsPriorityLoading(false);
     }
   };
 
@@ -133,11 +209,55 @@ function TicketDetail() {
         </Button>
 
         {(isAdmin || isL3) && (
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="destructive" size="sm">
-                <Trash2 className="mr-1.5 h-4 w-4" /> Delete Ticket
+          <>
+            {hasMarkedPriority ? (
+              <Button
+                variant="outline"
+                size="sm"
+                className="bg-amber-100 text-amber-700 hover:bg-amber-200 border-amber-200 dark:bg-amber-900/30 dark:text-amber-500"
+                onClick={onRemovePriority}
+                disabled={isPriorityLoading}
+              >
+                <Star className="mr-1.5 h-4 w-4 fill-current" /> Remove Priority
               </Button>
+            ) : (
+              <AlertDialog open={priorityModalOpen} onOpenChange={setPriorityModalOpen}>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="hover:text-amber-600 hover:bg-amber-50">
+                    <Star className="mr-1.5 h-4 w-4" /> Mark as Priority
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Mark Ticket as Priority</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will flag the ticket for urgent handling and notify the assignee.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <div className="my-4">
+                    <Label>Reason (Optional)</Label>
+                    <Input
+                      placeholder="e.g. Immediate regulatory attention required"
+                      value={priorityReason}
+                      onChange={(e) => setPriorityReason(e.target.value)}
+                      className="mt-2"
+                    />
+                  </div>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <Button onClick={onMarkPriority} disabled={isPriorityLoading}>
+                      Mark Priority
+                    </Button>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" size="sm">
+                  <Trash2 className="mr-1.5 h-4 w-4" /> Delete Ticket
+                </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
@@ -159,6 +279,7 @@ function TicketDetail() {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
+          </>
         )}
       </div>
 
@@ -179,7 +300,19 @@ function TicketDetail() {
                 <Detail k="Created By" v={`${t!.createdByName} (${t!.createdBy})`} />
                 <Detail k="Division" v={t!.division} />
                 <Detail k="Type" v={t!.type} />
-                <Detail k="Priority" v={<PriorityBadge priority={t!.priority} />} />
+                <Detail 
+                  k="Priority" 
+                  v={
+                    <div className="flex items-center gap-2">
+                      <PriorityBadge priority={t!.priority} />
+                      {t!.isPriority && (
+                        <Badge variant="default" className="bg-amber-500 text-white hover:bg-amber-600 border-transparent">
+                          <Star className="h-3 w-3 fill-current mr-1" /> Priority
+                        </Badge>
+                      )}
+                    </div>
+                  } 
+                />
                 <Detail k="Current Status" v={<StatusBadge status={t!.currentStatus} />} />
                 <Detail k="Portal Name" v={t!.portalName ?? "—"} />
                 <Detail

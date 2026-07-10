@@ -8,7 +8,7 @@ import { TrailLog } from "../models/TrailLog";
 import { Notification } from "../models/Notification";
 import { AuditLog } from "../models/AuditLog";
 import { AuthenticatedRequest } from "../middleware/authMiddleware";
-import { sendSocketNotification } from "../config/socket";
+import { sendSocketNotification, getIO } from "../config/socket";
 
 export async function createTicket(req: AuthenticatedRequest, res: Response) {
   try {
@@ -61,6 +61,15 @@ export async function createTicket(req: AuthenticatedRequest, res: Response) {
       }
     }
 
+    const trailAttachments = Array.isArray(req.files) ? req.files.map(file => ({
+      filename: file.originalname,
+      url: `/uploads/${file.filename}`,
+      mimeType: file.mimetype,
+      size: file.size,
+      uploadedAt: new Date(),
+      uploadedBy: creator.empId
+    })) : [];
+
     const now = new Date();
 
     // Create the ticket
@@ -103,6 +112,7 @@ export async function createTicket(req: AuthenticatedRequest, res: Response) {
       actorName: creator.name,
       actorRole: creator.role,
       actorDesignation: creator.designation || undefined,
+      attachments: trailAttachments,
       createdAt: now
     });
 
@@ -151,7 +161,8 @@ export function buildTicketMongoQuery(reqQuery: any, loggedInUser: any) {
     createdFrom,
     createdTo,
     updatedFrom,
-    updatedTo
+    updatedTo,
+    isPriority
   } = reqQuery;
 
   const query: any = {};
@@ -173,6 +184,8 @@ export function buildTicketMongoQuery(reqQuery: any, loggedInUser: any) {
   if (division) query.division = division;
   if (priority) query.priority = priority;
   if (type) query.type = type;
+  if (isPriority === "true") query.isPriority = true;
+  if (isPriority === "false") query.isPriority = false;
   
   if (status) {
     if (status === "Assigned") {
@@ -225,7 +238,7 @@ export async function listTickets(req: AuthenticatedRequest, res: Response) {
 
     const total = await Ticket.countDocuments(query);
     const tickets = await Ticket.find(query)
-      .sort({ createdAt: -1 })
+      .sort({ isPriority: -1, createdAt: -1 })
       .skip((p - 1) * size)
       .limit(size);
 
@@ -762,9 +775,27 @@ export async function updateStatus(req: AuthenticatedRequest, res: Response) {
 
         ticket.currentStatus = "Closed";
         ticket.closedAt = now;
+        ticket.isPriority = false;
+        ticket.priorityMarkedBy = [];
         await ticket.save();
 
         console.log("Status Change trail: ticketId", ticketId);
+        await TrailLog.create({
+          id: crypto.randomUUID(),
+          ticketId,
+          action: "Priority Removed Automatically",
+          comment: "Ticket closed; active priority flags cleared",
+          performedBy: "System",
+          performedByName: "System",
+          performerRole: "ADMIN",
+          previousStatus: "Resolved",
+          currentStatus: "Closed",
+          actorUserId: "System",
+          actorName: "System",
+          actorRole: "ADMIN",
+          createdAt: now
+        });
+
         await TrailLog.create({
           id: crypto.randomUUID(),
           ticketId,
@@ -795,9 +826,27 @@ export async function updateStatus(req: AuthenticatedRequest, res: Response) {
 
         ticket.currentStatus = "Closed";
         ticket.closedAt = now;
+        ticket.isPriority = false;
+        ticket.priorityMarkedBy = [];
         await ticket.save();
 
         console.log("Status Change trail: ticketId", ticketId);
+        await TrailLog.create({
+          id: crypto.randomUUID(),
+          ticketId,
+          action: "Priority Removed Automatically",
+          comment: "Ticket closed; active priority flags cleared",
+          performedBy: "System",
+          performedByName: "System",
+          performerRole: "ADMIN",
+          previousStatus: prevStatus,
+          currentStatus: "Closed",
+          actorUserId: "System",
+          actorName: "System",
+          actorRole: "ADMIN",
+          createdAt: now
+        });
+
         await TrailLog.create({
           id: crypto.randomUUID(),
           ticketId,
@@ -835,6 +884,20 @@ export async function updateStatus(req: AuthenticatedRequest, res: Response) {
         createdAt: now
       });
       sendSocketNotification(targetId, notif.toObject());
+    }
+
+    if (status === "Closed") {
+      const io = getIO();
+      if (io) {
+        io.emit("ticket:priority-updated", {
+          ticketId,
+          ticketMongoId: ticket._id,
+          action: "priority-cleared-on-close",
+          markedByUserId: "System",
+          remainingPriorityCount: 0,
+          isPriority: false
+        });
+      }
     }
 
     await AuditLog.create({
@@ -882,7 +945,11 @@ export async function listAssigneeTicketsSplit(req: AuthenticatedRequest, res: R
     }
 
     // Sort by createdAt desc
-    filteredTickets.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    filteredTickets.sort((a, b) => {
+      if (a.isPriority && !b.isPriority) return -1;
+      if (!a.isPriority && b.isPriority) return 1;
+      return b.createdAt.getTime() - a.createdAt.getTime();
+    });
 
     // Paginate manually
     const total = filteredTickets.length;

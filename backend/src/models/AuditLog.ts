@@ -5,7 +5,7 @@ export interface IAuditLog extends Document {
   empId: string;
   empName: string;
   role: "ADMIN" | "USER" | "L2" | "L3";
-  action: "Login" | "Logout" | "Password Change" | "Employee Create" | "Employee Update" | "Employee Delete" | "Ticket Create" | "Ticket Delete" | "Assignment" | "Reassignment" | "Comment" | "Status Change" | "Resolve" | "Close" | "Export";
+  action: "Login" | "Logout" | "Password Change" | "Employee Create" | "Employee Update" | "Employee Delete" | "Ticket Create" | "Ticket Delete" | "Assignment" | "Reassignment" | "Comment" | "Status Change" | "Resolve" | "Close" | "Export" | "Mark Priority" | "Remove Priority";
   context?: string;
   createdAt: Date;
 }
@@ -22,7 +22,7 @@ const AuditLogSchema = new Schema<IAuditLog>({
       "Login", "Logout", "Password Change",
       "Employee Create", "Employee Update", "Employee Delete",
       "Ticket Create", "Ticket Delete", "Assignment", "Reassignment", "Comment",
-      "Status Change", "Resolve", "Close", "Export"
+      "Status Change", "Resolve", "Close", "Export", "Mark Priority", "Remove Priority"
     ]
   },
   context: { type: String },

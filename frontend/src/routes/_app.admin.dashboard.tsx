@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { Activity, CheckCircle2, Inbox, Users, XCircle, Clock } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Activity, CheckCircle2, Inbox, Users, XCircle, Clock, Star } from "lucide-react";
 import { PageHeader } from "@/components/common/PageHeader";
 import { MetricCard } from "@/components/common/MetricCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,7 +16,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { getAdminMetrics, listTickets, listEmployees } from "@/services/mock";
-import { useState } from "react";
+import { getAdminPriorityTickets, getGlobalPriorityCount } from "@/services/ticketApi";
+import { useState, useEffect } from "react";
 import type { TicketStatus } from "@/types";
 
 export const Route = createFileRoute("/_app/admin/dashboard")({ component: AdminDashboard });
@@ -24,7 +25,8 @@ export const Route = createFileRoute("/_app/admin/dashboard")({ component: Admin
 function AdminDashboard() {
   const navigate = useNavigate();
   const router = useRouter();
-  const [statusFilter, setStatusFilter] = useState<TicketStatus | "Assigned" | null>(null);
+  const qc = useQueryClient();
+  const [statusFilter, setStatusFilter] = useState<TicketStatus | "Assigned" | "Priority" | null>(null);
 
   // Search & Filter input states
   const [search, setSearch] = useState("");
@@ -35,6 +37,11 @@ function AdminDashboard() {
 
   const { data: m } = useQuery({ queryKey: ["admin", "metrics"], queryFn: getAdminMetrics });
 
+  const { data: priorityCountData } = useQuery({
+    queryKey: ["priority-count", "global"],
+    queryFn: getGlobalPriorityCount,
+  });
+
   // Fetch L2/L3 employees for assignment filter
   const { data: usersData } = useQuery({
     queryKey: ["employees", { pageSize: 1000 }],
@@ -43,34 +50,81 @@ function AdminDashboard() {
   });
   const assignees = usersData?.rows.filter((e) => e.role === "L2" || e.role === "L3") ?? [];
 
+  const isPriorityFilter = statusFilter === "Priority";
+
   const { data: recent } = useQuery({
-    queryKey: [
-      "tickets",
-      {
-        status: statusFilter ?? undefined,
-        search: search || undefined,
-        division: division || undefined,
-        assignee: assignee || undefined,
-        priority: priority || undefined,
-        type: type || undefined,
-        page: 1,
-        pageSize: statusFilter ? 50 : 8,
-      },
-    ],
+    queryKey: isPriorityFilter
+      ? [
+          "priority-tickets",
+          "global",
+          {
+            search: search || undefined,
+            division: division || undefined,
+            assignee: assignee || undefined,
+            priority: priority || undefined,
+            type: type || undefined,
+            page: 1,
+            pageSize: 50,
+          },
+        ]
+      : [
+          "tickets",
+          {
+            status: statusFilter ?? undefined,
+            search: search || undefined,
+            division: division || undefined,
+            assignee: assignee || undefined,
+            priority: priority || undefined,
+            type: type || undefined,
+            page: 1,
+            pageSize: statusFilter ? 50 : 8,
+          },
+        ],
     queryFn: () =>
-      listTickets({
-        status: statusFilter ?? undefined,
-        search: search || undefined,
-        division: division || undefined,
-        assignee: assignee || undefined,
-        priority: priority || undefined,
-        type: type || undefined,
-        page: 1,
-        pageSize: statusFilter ? 50 : 8,
-      }),
+      isPriorityFilter
+        ? getAdminPriorityTickets({
+            search: search || undefined,
+            division: division || undefined,
+            assignee: assignee || undefined,
+            priority: priority || undefined,
+            type: type || undefined,
+            page: 1,
+            pageSize: 50,
+          })
+        : listTickets({
+            status: statusFilter ?? undefined,
+            search: search || undefined,
+            division: division || undefined,
+            assignee: assignee || undefined,
+            priority: priority || undefined,
+            type: type || undefined,
+            page: 1,
+            pageSize: statusFilter ? 50 : 8,
+          }),
   });
 
-  const toggleFilter = (status: TicketStatus | "Assigned") => {
+  useEffect(() => {
+    let active = true;
+    import("@/lib/socketClient").then(({ getSocket }) => {
+      if (!active) return;
+      const socket = getSocket();
+      if (socket) {
+        const onPriorityUpdated = () => {
+          qc.invalidateQueries({ queryKey: ["priority-count", "global"] });
+          qc.invalidateQueries({ queryKey: ["priority-tickets", "global"] });
+        };
+        socket.on("ticket:priority-updated", onPriorityUpdated);
+        return () => {
+          socket.off("ticket:priority-updated", onPriorityUpdated);
+        };
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, [qc]);
+
+  const toggleFilter = (status: TicketStatus | "Assigned" | "Priority") => {
     setStatusFilter((prev) => {
       const next = prev === status ? null : status;
       if (next === null) {
@@ -92,7 +146,7 @@ function AdminDashboard() {
         subtitle="System overview across all divisions and roles."
       />
 
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
         <MetricCard
           label="Total Tickets"
           value={m?.total ?? "—"}
@@ -123,6 +177,14 @@ function AdminDashboard() {
           accent="warn"
           onClick={() => toggleFilter("Closed")}
           hint={statusFilter === "Closed" ? "Filter active" : undefined}
+        />
+        <MetricCard
+          label="Priority"
+          value={priorityCountData?.count ?? "—"}
+          icon={Star}
+          accent="warn"
+          onClick={() => toggleFilter("Priority")}
+          hint={statusFilter === "Priority" ? "Filter active" : undefined}
         />
         <MetricCard
           label="Users"
@@ -248,6 +310,7 @@ function AdminDashboard() {
         <CardContent className="p-0">
           <TicketTable
             rows={recent?.rows ?? []}
+            showPriorityDetails={isPriorityFilter}
             onRowClick={(t) => router.navigate({ to: `/tickets/${t.ticketId}` })}
           />
         </CardContent>
