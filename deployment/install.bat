@@ -56,4 +56,8 @@ if not %errorlevel% == 0 (
   netsh advfirewall firewall add rule name="TRAI Backend 5002" dir=in action=allow protocol=TCP localport=5002
 )
 
+echo Seeding Database (this will fail safely if already seeded)...
+cd ..\backend
+call npm run seed
+
 echo Installation and Build Complete.
