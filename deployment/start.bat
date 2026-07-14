@@ -11,7 +11,7 @@ SET PORT=5002
 SET HOST=0.0.0.0
 SET CORS_ORIGIN=http://192.168.7.251:8085
 SET CLIENT_URL=http://192.168.7.251:8085
-call npx pm2 start npm --name "trai-backend" -- run start
+call npx pm2 start dist/server.js --name "trai-backend"
 
 cd /d "%FRONTEND_DIR%"
 SET PORT=8085
