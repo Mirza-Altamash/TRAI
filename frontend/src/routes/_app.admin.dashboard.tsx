@@ -26,7 +26,9 @@ function AdminDashboard() {
   const navigate = useNavigate();
   const router = useRouter();
   const qc = useQueryClient();
-  const [statusFilter, setStatusFilter] = useState<TicketStatus | "Assigned" | "Priority" | null>(null);
+  const [statusFilter, setStatusFilter] = useState<TicketStatus | "Assigned" | "Priority" | null>(
+    null,
+  );
 
   // Search & Filter input states
   const [search, setSearch] = useState("");

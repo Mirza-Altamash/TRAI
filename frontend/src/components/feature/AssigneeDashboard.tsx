@@ -97,7 +97,13 @@ export function AssigneeDashboard({ label }: { label: "L2" | "L3" }) {
           ) : undefined
         }
       />
-      <div className={label === "L3" ? "grid grid-cols-2 gap-4 md:grid-cols-4" : "grid grid-cols-2 gap-4 md:grid-cols-3"}>
+      <div
+        className={
+          label === "L3"
+            ? "grid grid-cols-2 gap-4 md:grid-cols-4"
+            : "grid grid-cols-2 gap-4 md:grid-cols-3"
+        }
+      >
         <MetricCard
           label="Open"
           value={m?.open ?? "—"}

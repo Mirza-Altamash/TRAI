@@ -4,7 +4,7 @@
 Always run all deployment commands from the deployment\ directory.
 
 ## 2. Environment variables
-Copy `frontend\.env.example` -> `frontend\.env` and `backend\.env.example` -> `backend\.env`.
+**Automated:** The `install.bat` script automatically generates `frontend\.env` and `backend\.env` with production configurations if they do not exist.
 Required backend keys: PORT, HOST, NODE_ENV, MONGODB_URI, CLIENT_URL, CORS_ORIGIN.
 Required frontend keys: VITE_API_URL, VITE_SOCKET_URL.
 
@@ -27,7 +27,7 @@ RDP machine: http://localhost:8085
 Other machines on LAN: http://192.168.7.251:8085
 
 ## 6. Database operations
-**WARNING: NEVER RUN THE SEED SCRIPT AGAINST THE PRODUCTION DATABASE!**
+**NOTE: Database Seeding is automated in `install.bat`. It is non-destructive and skips automatically if users already exist.**
 Backup:
 ```bat
 mongodump --db trai_citizen_hub --out backup_folder/

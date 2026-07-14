@@ -83,12 +83,10 @@ function L3PriorityTickets() {
           </div>
         </CardContent>
       </Card>
-      
+
       <Card>
         <CardHeader className="flex flex-row items-center justify-between py-4">
-          <CardTitle className="text-base">
-            Tickets ({ticketData?.total ?? 0})
-          </CardTitle>
+          <CardTitle className="text-base">Tickets ({ticketData?.total ?? 0})</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <TicketTable
@@ -98,11 +96,7 @@ function L3PriorityTickets() {
           />
           {ticketData && ticketData.totalPages > 1 && (
             <div className="p-4 border-t border-slate-100 dark:border-slate-800">
-              <Pager
-                currentPage={page}
-                totalPages={ticketData.totalPages}
-                onPageChange={setPage}
-              />
+              <Pager currentPage={page} totalPages={ticketData.totalPages} onPageChange={setPage} />
             </div>
           )}
         </CardContent>

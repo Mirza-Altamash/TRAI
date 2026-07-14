@@ -65,7 +65,9 @@ export function Sidebar({ role }: { role: Role }) {
 
   let items = NAV[role];
   if (role === "L3") {
-    const adminItems = NAV.ADMIN.filter((item) => item.to !== "/admin/sla" && item.to !== "/admin/priority");
+    const adminItems = NAV.ADMIN.filter(
+      (item) => item.to !== "/admin/sla" && item.to !== "/admin/priority",
+    );
     items = [...adminItems];
   } else if (role === "ADMIN") {
     items = NAV.ADMIN.filter((item) => item.to !== "/admin/sla");

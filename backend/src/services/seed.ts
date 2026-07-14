@@ -23,7 +23,14 @@ const STATUSES = ["Open", "Resolved", "Closed"] as const;
 export async function seedDatabase() {
   console.log("Seeding database...");
 
-  // Clear existing data
+  // Check if database is already seeded to prevent accidental wipes in production
+  const existingEmployeeCount = await Employee.countDocuments();
+  if (existingEmployeeCount > 0) {
+    console.log("Database is already seeded. Skipping seed process to protect existing data.");
+    return;
+  }
+
+  // Clear existing data (only if empty to avoid partial states)
   await Employee.deleteMany({});
   await Ticket.deleteMany({});
   await TrailLog.deleteMany({});

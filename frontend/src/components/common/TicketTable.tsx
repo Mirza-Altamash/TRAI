@@ -73,7 +73,11 @@ export function TicketTable({
             <TableCell className="font-mono text-xs">
               <span className="inline-flex items-center gap-1.5">
                 {t.isPriority && (
-                  <Badge variant="default" className="h-4 px-1 bg-amber-500 hover:bg-amber-600 border-transparent text-white" title="Priority Ticket">
+                  <Badge
+                    variant="default"
+                    className="h-4 px-1 bg-amber-500 hover:bg-amber-600 border-transparent text-white"
+                    title="Priority Ticket"
+                  >
                     <Star className="h-3 w-3 fill-current" />
                   </Badge>
                 )}
@@ -102,7 +106,9 @@ export function TicketTable({
                   {t.priorityMarkedBy?.[0]?.reason || "—"}
                 </TableCell>
                 <TableCell className="text-muted-foreground">
-                  {t.priorityMarkedBy?.[0]?.markedAt ? formatIstDate(t.priorityMarkedBy[0].markedAt) : "—"}
+                  {t.priorityMarkedBy?.[0]?.markedAt
+                    ? formatIstDate(t.priorityMarkedBy[0].markedAt)
+                    : "—"}
                 </TableCell>
               </>
             ) : (

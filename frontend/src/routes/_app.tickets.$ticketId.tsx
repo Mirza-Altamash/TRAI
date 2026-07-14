@@ -140,7 +140,7 @@ function TicketDetail() {
   const isClosed = t!.currentStatus === "Closed";
   const showManage = !isClosed;
   const showTrailInDetails = isAdmin || isL2 || isL3;
-  const hasMarkedPriority = t!.priorityMarkedBy?.some(p => p.userId === user.empId);
+  const hasMarkedPriority = t!.priorityMarkedBy?.some((p) => p.userId === user.empId);
 
   const onDelete = async () => {
     try {
@@ -223,7 +223,11 @@ function TicketDetail() {
             ) : (
               <AlertDialog open={priorityModalOpen} onOpenChange={setPriorityModalOpen}>
                 <AlertDialogTrigger asChild>
-                  <Button variant="outline" size="sm" className="hover:text-amber-600 hover:bg-amber-50">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="hover:text-amber-600 hover:bg-amber-50"
+                  >
                     <Star className="mr-1.5 h-4 w-4" /> Mark as Priority
                   </Button>
                 </AlertDialogTrigger>
@@ -258,27 +262,27 @@ function TicketDetail() {
                 <Button variant="destructive" size="sm">
                   <Trash2 className="mr-1.5 h-4 w-4" /> Delete Ticket
                 </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This action cannot be undone. This will permanently delete ticket{" "}
-                  <span className="font-mono font-semibold">{t!.ticketId}</span> and all related
-                  history records.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={onDelete}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                >
-                  Yes, Delete Ticket
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete ticket{" "}
+                    <span className="font-mono font-semibold">{t!.ticketId}</span> and all related
+                    history records.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={onDelete}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Yes, Delete Ticket
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </>
         )}
       </div>
@@ -300,18 +304,21 @@ function TicketDetail() {
                 <Detail k="Created By" v={`${t!.createdByName} (${t!.createdBy})`} />
                 <Detail k="Division" v={t!.division} />
                 <Detail k="Type" v={t!.type} />
-                <Detail 
-                  k="Priority" 
+                <Detail
+                  k="Priority"
                   v={
                     <div className="flex items-center gap-2">
                       <PriorityBadge priority={t!.priority} />
                       {t!.isPriority && (
-                        <Badge variant="default" className="bg-amber-500 text-white hover:bg-amber-600 border-transparent">
+                        <Badge
+                          variant="default"
+                          className="bg-amber-500 text-white hover:bg-amber-600 border-transparent"
+                        >
                           <Star className="h-3 w-3 fill-current mr-1" /> Priority
                         </Badge>
                       )}
                     </div>
-                  } 
+                  }
                 />
                 <Detail k="Current Status" v={<StatusBadge status={t!.currentStatus} />} />
                 <Detail k="Portal Name" v={t!.portalName ?? "—"} />

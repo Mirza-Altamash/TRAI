@@ -83,7 +83,7 @@ cd backend
 npm run seed
 cd ..
 ```
-*Note: This script will create default accounts like `TRAI-ADMIN-01`, `TRAI-L3-001`, `TRAI-JADV-01`, etc. Check the console output or the `backend/src/seed.ts` file for the exact default passwords.*
+*Note: This script will check if users exist, and if empty, it will create default accounts like `TRAI-ADMIN-01`, `TRAI-L3-001`, `TRAI-JADV-01`, etc. Check the console output or the `backend/src/services/seed.ts` file for the exact default passwords.*
 
 ---
 

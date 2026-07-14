@@ -176,7 +176,9 @@ function ChartCard({
   totals?: { name: string; count: number }[];
   customTotalText?: string;
 }) {
-  const totalVal = totals ? totals.reduce((sum: number, item: { count: number }) => sum + item.count, 0) : null;
+  const totalVal = totals
+    ? totals.reduce((sum: number, item: { count: number }) => sum + item.count, 0)
+    : null;
   return (
     <Card>
       <CardHeader className="pb-2 flex flex-row items-center justify-between">
