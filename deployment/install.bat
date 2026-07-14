@@ -27,6 +27,9 @@ if not exist "..\backend\.env" (
   echo JWT_REFRESH_SECRET=e741dbdfa8684c3e8de9d5f7f2b1d033603c7b2c01997fa4402a5e8de9d5f7f2b>> "..\backend\.env"
 )
 
+echo Installing PM2 process manager...
+call npm install -g pm2
+
 echo Installing frontend dependencies...
 cd ..\frontend
 call npm install
