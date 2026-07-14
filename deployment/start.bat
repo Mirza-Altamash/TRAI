@@ -14,7 +14,7 @@ start "TRAI Backend" cmd /c "npm run start"
 
 echo Starting Frontend...
 cd /d "%FRONTEND_DIR%"
-start "TRAI Frontend" cmd /c "npm run preview -- --host 0.0.0.0 --port 8085"
+start "TRAI Frontend" cmd /c "set PORT=8085&& set HOST=0.0.0.0&& node .output/server/index.mjs"
 
 echo.
 echo Backend:  http://192.168.7.251:5002
