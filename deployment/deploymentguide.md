@@ -20,7 +20,8 @@ Run:
 ```bat
 start.bat
 ```
-This opens two command windows (backend on 5002, frontend on 8085).
+This uses PM2 to launch both the backend (port 5002) and frontend (port 8085) silently in the background. You can safely close the terminal.
+To view logs, run `npx pm2 logs`. To check status, run `npx pm2 status`.
 
 ## 5. Accessing the portal
 RDP machine: http://localhost:8085
@@ -41,7 +42,7 @@ mongorestore --db trai_citizen_hub backup_folder/trai_citizen_hub/
 - **Firewall issues:** Check Windows Defender Firewall inbound TCP on 8085 and 5002.
 - **CORS errors:** Ensure CLIENT_URL and CORS_ORIGIN in backend\.env match http://192.168.7.251:8085.
 - **MongoDB connection:** Ensure MongoDB is running on 127.0.0.1:27017.
-- **Port conflicts:** Use `netstat -ano | findstr :8085` or `:5002`, then kill conflicting PIDs.
+- **Port conflicts or Restarting:** Use `npx pm2 status` and `npx pm2 restart all` instead of killing ports manually. You can completely stop the services using `stop.bat`.
 
 
 <!-- mirza -->
