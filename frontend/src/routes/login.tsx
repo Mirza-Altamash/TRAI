@@ -18,8 +18,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { loginMock } from "@/services/mock";
 import { dashboardPathFor, getCurrentSession, useAuth } from "@/lib/auth";
+import { apiClient } from "@/lib/apiClient";
 
 const schema = z.object({
   identifier: z.string().min(2, "Required"),
@@ -58,11 +58,22 @@ function LoginPage() {
     setLoading(true);
     setError(null);
     try {
-      const session = await loginMock(vals.identifier, vals.password, mode);
+      const res = await apiClient.post("/auth/login", {
+        identifier: vals.identifier,
+        password: vals.password,
+        mode,
+      });
+      const session = {
+        user: res.data.user,
+        accessToken: res.data.accessToken,
+        refreshToken: res.data.refreshToken || "",
+        mustChangePassword: res.data.mustChangePassword,
+      };
       setSession(session);
       navigate({ to: dashboardPathFor(session.user.role) });
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Login failed");
+    } catch (e: any) {
+      const msg = e.response?.data?.message || "Invalid credentials. Please ensure your User ID and password are correct.";
+      setError(msg);
     } finally {
       setLoading(false);
     }

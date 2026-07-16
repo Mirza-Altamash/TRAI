@@ -34,7 +34,7 @@ export async function listEmployees(req: AuthenticatedRequest, res: Response) {
 
     const total = await Employee.countDocuments(query);
     const employees = await Employee.find(query)
-      .sort({ createdAt: sortOrder })
+      .sort({ orderRank: 1, createdAt: sortOrder })
       .skip((p - 1) * size)
       .limit(size)
       .select("-passwordHash"); // Exclude hashed passwords
@@ -226,7 +226,9 @@ export async function listMembers(req: AuthenticatedRequest, res: Response) {
       isActive: true
     };
 
-    const members = await Employee.find(query).select("empId name role subRole division isActive designation");
+    const members = await Employee.find(query)
+      .select("empId name role subRole division isActive designation")
+      .sort({ orderRank: 1, name: 1 });
     return res.json(members);
   } catch (error: any) {
     console.error("List members error:", error);

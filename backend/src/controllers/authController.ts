@@ -77,7 +77,8 @@ export async function login(req: AuthenticatedRequest, res: Response) {
     return res.json({
       user: userObj,
       accessToken,
-      refreshToken
+      refreshToken,
+      mustChangePassword: employee.mustChangePassword
     });
   } catch (error: any) {
     console.error("Login error:", error);
@@ -202,6 +203,7 @@ export async function changePassword(req: AuthenticatedRequest, res: Response) {
 
     // Hash and update new password
     employee.passwordHash = await hashPassword(next);
+    employee.mustChangePassword = false;
     await employee.save();
 
     // Write audit log
@@ -214,10 +216,10 @@ export async function changePassword(req: AuthenticatedRequest, res: Response) {
       createdAt: new Date()
     });
 
-    return res.json({ message: "Password updated successfully" });
+    res.json({ message: "Password updated successfully" });
   } catch (error: any) {
     console.error("Change password error:", error);
-    return res.status(500).json({ message: error.message || "Internal server error" });
+    res.status(500).json({ message: "Internal server error" });
   }
 }
 

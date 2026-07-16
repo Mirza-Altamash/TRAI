@@ -159,13 +159,13 @@ export async function getChartsAnalytics(req: AuthenticatedRequest, res: Respons
       workloadCounts.map(item => [item._id, item.count])
     );
 
-    const l2Employees = await Employee.find({ role: "L2", isActive: true });
+    const l2Employees = await Employee.find({ role: "L2", isActive: true }).sort({ orderRank: 1, name: 1 });
     const l2workload = l2Employees.map(e => ({
       name: e.name,
       count: workloadMap.get(e.empId) || 0
     }));
 
-    const l3Employees = await Employee.find({ role: "L3", isActive: true });
+    const l3Employees = await Employee.find({ role: "L3", isActive: true }).sort({ orderRank: 1, name: 1 });
     const l3workload = l3Employees.map(e => ({
       name: e.name,
       count: workloadMap.get(e.empId) || 0
@@ -233,7 +233,7 @@ export async function getSlaMetrics(req: AuthenticatedRequest, res: Response) {
     const l2l3Members = await Employee.find({
       role: { $in: ["L2", "L3"] },
       isActive: true
-    }).limit(6);
+    }).sort({ orderRank: 1, name: 1 }).limit(6);
 
     const byMember = l2l3Members.map((e, i) => ({
       name: e.name,

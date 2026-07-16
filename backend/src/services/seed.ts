@@ -1,4 +1,6 @@
 import mongoose from "mongoose";
+import fs from "fs";
+import path from "path";
 import crypto from "crypto";
 import { connectDB } from "../config/db";
 import { Employee } from "../models/Employee";
@@ -37,22 +39,11 @@ export async function seedDatabase() {
   await Notification.deleteMany({});
   await AuditLog.deleteMany({});
 
-  const defaultPassword = "Password123";
+  const defaultPassword = "12345";
   const defaultPasswordHash = await hashPassword(defaultPassword);
 
-  const initialEmployees = [
-    { empId: "TRAI-ADM-001", name: "Anil Sharma", email: "anil.sharma@trai.gov.in", role: "ADMIN", subRole: null, division: "ALL", designation: "System Administrator", floor: "5F", isActive: true },
-    { empId: "TRAI-USR-001", name: "Mirza Ahmed", email: "mirza.ahmed@trai.gov.in", role: "USER", subRole: null, division: "IT", designation: "Assistant Director", floor: "3F", isActive: true },
-    { empId: "TRAI-USR-002", name: "Priya Nair", email: "priya.nair@trai.gov.in", role: "USER", subRole: null, division: "QoS", designation: "Joint Advisor", floor: "4F", isActive: true },
-    { empId: "TRAI-USR-003", name: "Rohit Verma", email: "rohit.verma@trai.gov.in", role: "USER", subRole: null, division: "NSL", designation: "Director", floor: "2F", isActive: true },
-    { empId: "TRAI-L2-001", name: "Sandeep Rao", email: "sandeep.rao@trai.gov.in", role: "L2", subRole: "Developer", division: "IT", designation: "Senior Developer", floor: "5F", isActive: true },
-    { empId: "TRAI-L2-002", name: "Kavita Iyer", email: "kavita.iyer@trai.gov.in", role: "L2", subRole: "Infra", division: "IT", designation: "Infra Lead", floor: "5F", isActive: true },
-    { empId: "TRAI-L2-003", name: "Vikram Singh", email: "vikram.singh@trai.gov.in", role: "L2", subRole: "Network", division: "IT", designation: "Network Engineer", floor: "5F", isActive: true },
-    { empId: "TRAI-L3-001", name: "Neha Gupta", email: "neha.gupta@trai.gov.in", role: "L3", subRole: "SRO", division: "IT", designation: "Senior Research Officer", floor: "6F", isActive: true },
-    { empId: "TRAI-L3-002", name: "Arjun Mehta", email: "arjun.mehta@trai.gov.in", role: "L3", subRole: "J.Adv", division: "QoS", designation: "Joint Advisor", floor: "6F", isActive: true },
-    { empId: "TRAI-L3-003", name: "Sunita Pillai", email: "sunita.pillai@trai.gov.in", role: "L3", subRole: "D.Adv", division: "B&CS", designation: "Deputy Advisor", floor: "6F", isActive: true },
-    { empId: "TRAI-L3-004", name: "Rajesh Khanna", email: "rajesh.khanna@trai.gov.in", role: "L3", subRole: "Adv", division: "F&EA", designation: "Advisor", floor: "7F", isActive: true },
-  ];
+  const jsonPath = path.join(__dirname, "employees.json");
+  const initialEmployees = JSON.parse(fs.readFileSync(jsonPath, "utf-8"));
 
   const seededEmployees = [];
 
@@ -66,27 +57,7 @@ export async function seedDatabase() {
     seededEmployees.push(created);
   }
 
-  // Demo employees with extras for table density
-  const extrasNames = ["Aarav Patel", "Ishita Singh", "Kabir Roy", "Meera Das", "Neel Bose", "Ojas Kumar", "Pranav Patel", "Rhea Singh", "Sara Roy", "Tara Das", "Vivaan Bose", "Yash Kumar"];
-  for (let i = 0; i < 24; i++) {
-    const divs = DIVISIONS;
-    const name = extrasNames[i % extrasNames.length];
-    const created = await Employee.create({
-      empId: `TRAI-USR-${String(100 + i).padStart(3, "0")}`,
-      name,
-      email: `user${i + 4}@trai.gov.in`,
-      passwordHash: defaultPasswordHash,
-      role: "USER",
-      subRole: null,
-      division: divs[i % divs.length],
-      designation: ["Assistant", "Officer", "Joint Advisor", "Director"][i % 4],
-      floor: `${(i % 5) + 2}F`,
-      isActive: i % 7 !== 0,
-      createdAt: iso(70 - i, 9 + (i % 8)),
-      updatedAt: iso(i % 30)
-    });
-    seededEmployees.push(created);
-  }
+
 
   console.log(`Seeded ${seededEmployees.length} employees successfully.`);
 

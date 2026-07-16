@@ -7,6 +7,7 @@ export interface AuthSession {
   user: Employee;
   accessToken: string;
   refreshToken: string;
+  mustChangePassword?: boolean;
 }
 
 interface AuthContextValue {

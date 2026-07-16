@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { TopBar } from "./TopBar";
 import { Sidebar } from "./Sidebar";
 import { useAuth } from "@/lib/auth";
+import { ChangePasswordModal } from "../feature/ChangePasswordModal";
 
 export function AppShell() {
   const { session } = useAuth();
@@ -33,6 +34,7 @@ export function AppShell() {
           </div>
         </main>
       </div>
+      <ChangePasswordModal />
     </div>
   );
 }

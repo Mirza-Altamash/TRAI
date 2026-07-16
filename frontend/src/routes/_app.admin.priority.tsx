@@ -94,9 +94,9 @@ function AdminPriorityTickets() {
             showAssignee={true}
             showPriorityDetails={true}
           />
-          {ticketData && ticketData.totalPages > 1 && (
+          {ticketData && ticketData.total > ticketData.pageSize && (
             <div className="p-4 border-t border-slate-100 dark:border-slate-800">
-              <Pager currentPage={page} totalPages={ticketData.totalPages} onPageChange={setPage} />
+              <Pager page={ticketData.page} pageSize={ticketData.pageSize} total={ticketData.total} onPageChange={setPage} />
             </div>
           )}
         </CardContent>

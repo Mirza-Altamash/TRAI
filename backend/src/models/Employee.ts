@@ -6,10 +6,12 @@ export interface IEmployee extends Document {
   email: string;
   passwordHash: string;
   role: "ADMIN" | "USER" | "L2" | "L3";
-  subRole: "Developer" | "Infra" | "Network" | "Support" | "SRO" | "J.Adv" | "D.Adv" | "Adv" | "TO" | "SO" | "Assistant" | null;
-  division: "IT" | "NSL" | "QoS" | "B&CS" | "F&EA" | "ALL";
+  subRole: string | null;
+  division: string;
   designation: string;
   floor: string;
+  orderRank: number;
+  mustChangePassword: boolean;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -23,9 +25,11 @@ const EmployeeSchema = new Schema<IEmployee>(
     passwordHash: { type: String, required: true },
     role: { type: String, required: true, enum: ["ADMIN", "USER", "L2", "L3"] },
     subRole: { type: String, default: null },
-    division: { type: String, required: true, enum: ["IT", "NSL", "QoS", "B&CS", "F&EA", "ALL"] },
+    division: { type: String, required: true },
     designation: { type: String, required: true },
-    floor: { type: String, required: true },
+    floor: { type: String, required: true, default: "N/A" },
+    orderRank: { type: Number, required: true, default: 99 },
+    mustChangePassword: { type: Boolean, default: true },
     isActive: { type: Boolean, default: true }
   },
   { timestamps: true }
