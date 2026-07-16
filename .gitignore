@@ -50,3 +50,8 @@ backup_folder/
 dump/
 *.bak
 coverage/
+
+# Generated files
+TRAI_Citizen_Hub.zip
+node_modules
+package-lock.json
