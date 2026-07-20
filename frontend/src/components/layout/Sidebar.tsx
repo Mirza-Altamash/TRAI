@@ -131,9 +131,6 @@ export function Sidebar({ role }: { role: Role }) {
     { to: "/l3/priority", label: "My Priority Tickets", icon: Star },
   ];
 
-  const shouldBeOpen = isReportsOpen || hasActiveSubItem;
-  const portalLabel = role === "L3" ? "L3 Admin" : role;
-
   return (
     <aside className="hidden w-60 shrink-0 flex-col gap-1 border-r border-sidebar-border bg-sidebar px-3 py-4 text-sidebar-foreground lg:flex">
       <div className="mb-3 flex items-center gap-2 px-2 text-xs uppercase tracking-wider text-sidebar-foreground/70">
