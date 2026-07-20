@@ -15,7 +15,6 @@ import {
   UserCircle,
   Users,
   History,
-  TimerReset,
   Inbox,
   ChevronDown,
   ChevronRight,
@@ -30,172 +29,160 @@ interface NavItem {
   icon: LucideIcon;
 }
 
-const NAV: Record<Role, NavItem[]> = {
-  ADMIN: [
-    { to: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { to: "/admin/totalticket", label: "Total Tickets", icon: Inbox },
-    { to: "/admin/priority", label: "Priority Tickets", icon: Star },
-    { to: "/admin/employees", label: "Employees", icon: Users },
-    { to: "/admin/analytics", label: "Analytics", icon: BarChart3 },
-    { to: "/admin/reports", label: "Reports & Export", icon: FileText },
-    { to: "/admin/audit", label: "Audit Logs", icon: History },
-    { to: "/admin/sla", label: "SLA Dashboard", icon: TimerReset },
-    { to: "/admin/mis", label: "MIS Reports", icon: ClipboardList },
-  ],
-  USER: [
-    { to: "/user/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { to: "/user/tickets", label: "My Tickets", icon: ListChecks },
-    { to: "/user/tickets/new", label: "Raise Ticket", icon: PlusCircle },
-    { to: "/user/profile", label: "Profile", icon: UserCircle },
-  ],
-  L2: [
-    { to: "/l2/dashboard", label: "Dashboard", icon: Gauge },
-    { to: "/l2/tickets", label: "Assigned Tickets", icon: ListChecks },
-    { to: "/l2/profile", label: "Profile", icon: UserCircle },
-  ],
-  L3: [
-    { to: "/l3/dashboard", label: "Dashboard", icon: Gauge },
-    { to: "/l3/tickets", label: "Assigned Tickets", icon: ListChecks },
-    { to: "/l3/profile", label: "Profile", icon: UserCircle },
-  ],
-};
+// ─── ADMIN oversight items (shared by ADMIN advisors) ────────────────────────
+const ADMIN_OVERSIGHT: NavItem[] = [
+  { to: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/admin/totalticket", label: "Total Tickets", icon: Inbox },
+  { to: "/admin/priority", label: "Priority Tickets", icon: Star },
+  { to: "/admin/employees", label: "User Management", icon: Users },
+  { to: "/admin/analytics", label: "Analytics", icon: BarChart3 },
+  { to: "/admin/reports", label: "Reports & Export", icon: FileText },
+  { to: "/admin/audit", label: "Audit Logs", icon: History },
+  { to: "/admin/mis", label: "MIS Reports", icon: ClipboardList },
+];
+
+// ─── ADVISOR oversight (no user management, no audit - those are IT only) ────
+const ADVISOR_OVERSIGHT: NavItem[] = [
+  { to: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/admin/totalticket", label: "Total Tickets", icon: Inbox },
+  { to: "/admin/priority", label: "Priority Tickets", icon: Star },
+  { to: "/admin/analytics", label: "Analytics", icon: BarChart3 },
+  { to: "/admin/reports", label: "Reports & Export", icon: FileText },
+  { to: "/admin/mis", label: "MIS Reports", icon: ClipboardList },
+];
+
+// ─── Personal workspace items (used by ADMIN advisors AND L3) ────────────────
+const PERSONAL_WORKSPACE: NavItem[] = [
+  { to: "/l3/assignments", label: "My Assignments", icon: ListChecks },
+  { to: "/admin/tickets/new", label: "Raise Ticket", icon: PlusCircle },
+  { to: "/l3/raised", label: "My Raised Tickets", icon: Inbox },
+  { to: "/l3/priority", label: "My Priority Tickets", icon: Star },
+];
+
+const REPORT_ROUTES = ["/admin/analytics", "/admin/reports", "/admin/mis", "/admin/audit"];
 
 export function Sidebar({ role }: { role: Role }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-
   const { session } = useAuth();
+  const subRole = session?.user?.subRole;
 
-  // Determine if this ADMIN is an Advisor-type (not an IT Admin)
-  const advisorSubRoles = ["Adv", "JAdv", "DAdv", "J.Adv", "D.Adv", "Pr.Adv", "Sr.Adv"];
-  const isAdvisor = role === "ADMIN" && advisorSubRoles.includes(session?.user?.subRole ?? "");
+  // Every ADMIN in this system is a senior officer (Advisor/Chairman/Member/Secretary)
+  // They all get the Advisor workspace + oversight view
+  const isAdmin = role === "ADMIN";
+  const isL3 = role === "L3";
+  const isL2 = role === "L2";
 
-  let items = NAV[role];
-  if (role === "L3") {
-    const adminItems = NAV.ADMIN.filter(
-      (item) => item.to !== "/admin/sla" && item.to !== "/admin/priority",
-    );
-    items = [...adminItems];
-  } else if (role === "ADMIN" && isAdvisor) {
-    // Advisors see ticket views + analytics/reports, but NOT user management or audit
-    items = NAV.ADMIN.filter(
-      (item) =>
-        item.to !== "/admin/employees" &&
-        item.to !== "/admin/audit" &&
-        item.to !== "/admin/sla",
-    );
-  } else if (role === "ADMIN") {
-    items = NAV.ADMIN.filter((item) => item.to !== "/admin/sla");
-  } else if (role === "L2") {
-    items = [
+  // ─── Build nav items ────────────────────────────────────────────────────────
+  let oversightItems: NavItem[] = [];
+  if (isAdmin) {
+    oversightItems = ADVISOR_OVERSIGHT;
+  } else if (isL3) {
+    oversightItems = ADMIN_OVERSIGHT.filter((i) => i.to !== "/admin/sla");
+  } else if (isL2) {
+    oversightItems = [
       { to: "/l2/assignments", label: "Assignments", icon: ListChecks },
       { to: "/l2/tickets/new", label: "Raise Ticket", icon: PlusCircle },
       { to: "/l2/raised", label: "My Raised Tickets", icon: Inbox },
       { to: "/l2/profile", label: "Profile", icon: UserCircle },
     ];
+  } else {
+    // USER
+    oversightItems = [
+      { to: "/user/dashboard", label: "Dashboard", icon: LayoutDashboard },
+      { to: "/user/tickets", label: "My Tickets", icon: ListChecks },
+      { to: "/user/tickets/new", label: "Raise Ticket", icon: PlusCircle },
+      { to: "/user/profile", label: "Profile", icon: UserCircle },
+    ];
   }
 
-  const reportRoutes = ["/admin/analytics", "/admin/reports", "/admin/mis", "/admin/audit"];
-  const topLevelItems = items.filter((item) => !reportRoutes.includes(item.to));
-  const subItems = items.filter((item) => reportRoutes.includes(item.to));
+  const topItems = oversightItems.filter((i) => !REPORT_ROUTES.includes(i.to));
+  const reportItems = oversightItems.filter((i) => REPORT_ROUTES.includes(i.to));
 
-  // Determine if active path falls inside sub-items to auto-expand it!
-  const hasActiveSubItem = subItems.some(
-    (item) => pathname === item.to || pathname.startsWith(item.to + "/"),
+  const hasActiveReport = reportItems.some(
+    (i) => pathname === i.to || pathname.startsWith(i.to + "/"),
   );
-  const [isReportsOpen, setIsReportsOpen] = useState(hasActiveSubItem);
-  const shouldBeOpen = isReportsOpen || hasActiveSubItem;
-  const portalLabel = role === "L3" ? "L3 Admin" : isAdvisor ? "Advisor" : role;
+  const [isReportsOpen, setIsReportsOpen] = useState(hasActiveReport);
+  const reportsExpanded = isReportsOpen || hasActiveReport;
 
-  const getSubRoleLabel = (sub: string | null | undefined) => {
-    if (!sub) return "Member";
+  // ─── Labels ─────────────────────────────────────────────────────────────────
+  const getSubRoleLabel = (sub: string | null | undefined): string => {
+    if (!sub) return "Advisor";
     if (sub === "J.Adv" || sub === "JAdv") return "Jt. Advisor";
     if (sub === "D.Adv" || sub === "DAdv") return "Dy. Advisor";
     if (sub === "Adv") return "Advisor";
     if (sub === "Pr.Adv") return "Pr. Advisor";
     if (sub === "Sr.Adv") return "Sr. Advisor";
+    if (sub === "SRO") return "SRO";
+    if (sub === "TO") return "TO";
+    if (sub === "SO") return "SO";
     return sub;
   };
-  const workspaceLabel = `${getSubRoleLabel(session?.user?.subRole)} Workspace`;
 
-  const advisorPersonalItems = [
-    { to: "/l3/assignments", label: "My Assignments", icon: ListChecks },
-    { to: "/admin/tickets/new", label: "Raise Ticket", icon: PlusCircle },
-    { to: "/l3/raised", label: "My Raised Tickets", icon: Inbox },
-    { to: "/l3/priority", label: "My Priority Tickets", icon: Star },
-  ];
+  const portalLabel =
+    isAdmin ? "Advisor" :
+    isL3 ? getSubRoleLabel(subRole) :
+    isL2 ? getSubRoleLabel(subRole) :
+    "User";
 
-  const l3PersonalItems = [
-    { to: "/l3/assignments", label: "My Assignments", icon: ListChecks },
-    { to: "/admin/tickets/new", label: "Raise Ticket", icon: PlusCircle },
-    { to: "/l3/raised", label: "My Raised Tickets", icon: Inbox },
-    { to: "/l3/priority", label: "My Priority Tickets", icon: Star },
-  ];
+  const workspaceLabel = `${getSubRoleLabel(subRole)} Workspace`;
+
+  const navLink = (item: NavItem) => {
+    const active = pathname === item.to || pathname.startsWith(item.to + "/");
+    return (
+      <Link
+        key={item.to}
+        to={item.to}
+        className={cn(
+          "flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors",
+          active
+            ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+            : "text-sidebar-foreground/85 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
+        )}
+      >
+        <item.icon className="h-4 w-4" />
+        {item.label}
+      </Link>
+    );
+  };
 
   return (
     <aside className="hidden w-60 shrink-0 flex-col gap-1 border-r border-sidebar-border bg-sidebar px-3 py-4 text-sidebar-foreground lg:flex">
       <div className="mb-3 flex items-center gap-2 px-2 text-xs uppercase tracking-wider text-sidebar-foreground/70">
         <ShieldCheck className="h-3.5 w-3.5" /> {portalLabel} Portal
       </div>
+
       <nav className="flex flex-col gap-0.5">
-        {/* Render L2 Header */}
-        {role === "L2" && (
-          <div className="mb-2 flex items-center gap-2 px-2 text-[10px] font-bold uppercase tracking-wider text-sidebar-foreground/60">
-            <Folder className="h-3.5 w-3.5" /> {workspaceLabel}
-          </div>
-        )}
-        {/* Render Advisor workspace header */}
-        {isAdvisor && (
+
+        {/* ── L2 workspace label ──────────────────────────────── */}
+        {isL2 && (
           <div className="mb-2 flex items-center gap-2 px-2 text-[10px] font-bold uppercase tracking-wider text-sidebar-foreground/60">
             <Folder className="h-3.5 w-3.5" /> {workspaceLabel}
           </div>
         )}
 
-        {/* Render Top Level flat items */}
-        {topLevelItems.map((item) => {
-          let displayLabel = item.label;
-          if (item.to === "/admin/employees") {
-            displayLabel = "User Management";
-          }
-          const active = pathname === item.to || pathname.startsWith(item.to + "/");
-          return (
-            <Link
-              key={item.to}
-              to={item.to}
-              className={cn(
-                "flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors",
-                active
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                  : "text-sidebar-foreground/85 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
-              )}
-            >
-              <item.icon className="h-4 w-4" />
-              {displayLabel}
-            </Link>
-          );
-        })}
+        {/* ── Top-level navigation items ──────────────────────── */}
+        {topItems.map(navLink)}
 
-        {/* Collapsible Section for reports */}
-        {(role === "ADMIN" || role === "L3") && subItems.length > 0 && (
+        {/* ── Collapsible Reports section (ADMIN + L3) ─────────── */}
+        {(isAdmin || isL3) && reportItems.length > 0 && (
           <div className="mt-1">
             <button
               onClick={() => setIsReportsOpen(!isReportsOpen)}
-              className={cn(
-                "flex w-full items-center justify-between rounded-md px-3 py-2 text-sm transition-colors text-sidebar-foreground/85 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
-              )}
+              className="flex w-full items-center justify-between rounded-md px-3 py-2 text-sm transition-colors text-sidebar-foreground/85 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground"
             >
               <span className="flex items-center gap-2.5">
                 <Folder className="h-4 w-4" />
-                Reports &amp; Miscellaneous
+                Reports & Miscellaneous
               </span>
-              {shouldBeOpen ? (
+              {reportsExpanded ? (
                 <ChevronDown className="h-3.5 w-3.5" />
               ) : (
                 <ChevronRight className="h-3.5 w-3.5" />
               )}
             </button>
-            {shouldBeOpen && (
+            {reportsExpanded && (
               <div className="ml-4 mt-0.5 flex flex-col gap-0.5 border-l border-sidebar-border pl-2.5">
-                {subItems.map((item) => {
+                {reportItems.map((item) => {
                   const active = pathname === item.to || pathname.startsWith(item.to + "/");
                   return (
                     <Link
@@ -218,59 +205,26 @@ export function Sidebar({ role }: { role: Role }) {
           </div>
         )}
 
-        {/* Render L3 Workspace Header and Links */}
-        {role === "L3" && (
-          <>
-            <div className="mt-4 mb-2 flex items-center gap-2 px-2 text-[10px] font-bold uppercase tracking-wider text-sidebar-foreground/60 border-t border-sidebar-border/30 pt-4">
-              <Folder className="h-3.5 w-3.5" /> {workspaceLabel}
-            </div>
-            {l3PersonalItems.map((item) => {
-              const active = pathname === item.to || pathname.startsWith(item.to + "/");
-              return (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  className={cn(
-                    "flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors",
-                    active
-                      ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                      : "text-sidebar-foreground/85 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
-                  )}
-                >
-                  <item.icon className="h-4 w-4" />
-                  {item.label}
-                </Link>
-              );
-            })}
-          </>
-        )}
-
-        {/* Render Advisor Workspace personal links */}
-        {isAdvisor && (
+        {/* ── ADMIN Advisor Personal Workspace ────────────────── */}
+        {isAdmin && (
           <>
             <div className="mt-4 mb-2 flex items-center gap-2 px-2 text-[10px] font-bold uppercase tracking-wider text-sidebar-foreground/60 border-t border-sidebar-border/30 pt-4">
               <Folder className="h-3.5 w-3.5" /> My Workspace
             </div>
-            {advisorPersonalItems.map((item) => {
-              const active = pathname === item.to || pathname.startsWith(item.to + "/");
-              return (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  className={cn(
-                    "flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors",
-                    active
-                      ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                      : "text-sidebar-foreground/85 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
-                  )}
-                >
-                  <item.icon className="h-4 w-4" />
-                  {item.label}
-                </Link>
-              );
-            })}
+            {PERSONAL_WORKSPACE.map(navLink)}
           </>
         )}
+
+        {/* ── L3 Personal Workspace ───────────────────────────── */}
+        {isL3 && (
+          <>
+            <div className="mt-4 mb-2 flex items-center gap-2 px-2 text-[10px] font-bold uppercase tracking-wider text-sidebar-foreground/60 border-t border-sidebar-border/30 pt-4">
+              <Folder className="h-3.5 w-3.5" /> {workspaceLabel}
+            </div>
+            {PERSONAL_WORKSPACE.map(navLink)}
+          </>
+        )}
+
       </nav>
     </aside>
   );

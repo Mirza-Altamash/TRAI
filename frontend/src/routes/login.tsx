@@ -98,21 +98,23 @@ function LoginPage() {
 
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 min-h-screen">
         {/* Left Side: Branded Hero Panel (lg:col-span-7) */}
-        <div className="relative hidden lg:flex lg:col-span-7 flex-col justify-between bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-900 via-[#00448B] to-slate-950 p-16 text-white overflow-hidden border-r border-blue-800/20">
-          {/* Subtle Ambient Orbs */}
-          <div className="absolute rounded-full bg-blue-500/20 blur-3xl w-96 h-96 -top-12 -left-12 pointer-events-none" />
-          <div className="absolute rounded-full bg-amber-500/5 blur-3xl w-80 h-80 bottom-12 right-12 pointer-events-none" />
+        <div className="relative hidden lg:flex lg:col-span-7 flex-col justify-between bg-[#00275C] p-16 text-white overflow-hidden border-r-4 border-[#FFB800]">
+          {/* Strong geometric accent shapes */}
+          <div className="absolute top-0 right-0 w-72 h-72 bg-[#003a8c] rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-56 h-56 bg-[#001f47] rounded-full translate-y-1/2 -translate-x-1/2 pointer-events-none" />
+          {/* Gold accent stripe at top */}
+          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#FFB800] via-[#FFC933] to-[#FFB800]" />
 
           {/* Header Area */}
           <div className="relative flex items-center gap-4 z-10">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-white/10 border border-white/20 backdrop-blur-sm">
-              <Landmark className="h-6 w-6 text-amber-400" />
+            <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-[#FFB800] shadow-lg">
+              <Landmark className="h-7 w-7 text-[#00275C]" />
             </div>
             <div>
-              <div className="text-sm font-bold tracking-wider uppercase text-white">
+              <div className="text-base font-extrabold tracking-wider uppercase text-white">
                 Telecom Regulatory Authority of India
               </div>
-              <div className="text-xs text-blue-200/70 font-semibold tracking-wide">
+              <div className="text-sm text-[#93C5FD] font-semibold tracking-wide mt-0.5">
                 भारतीय दूरसंचार विनियामक प्राधिकरण
               </div>
             </div>
@@ -123,86 +125,81 @@ function LoginPage() {
             className="relative flex items-center justify-center my-12 z-10"
             style={{ perspective: "1200px" }}
           >
-            {/* Background Layer Card */}
+            {/* Shadow depth layer */}
             <div
-              className="absolute top-12 left-12 w-full max-w-sm h-64 rounded-2xl border border-white/10 bg-white/5 opacity-30 shadow-2xl pointer-events-none"
-              style={{
-                transform: "perspective(1200px) rotateY(-10deg) rotateX(5deg) translateZ(-60px)",
-              }}
+              className="absolute top-8 left-8 w-full max-w-sm h-72 rounded-2xl bg-[#001f47] shadow-2xl pointer-events-none"
+              style={{ transform: "perspective(1200px) rotateY(-10deg) rotateX(5deg) translateZ(-40px)" }}
             />
 
-            {/* Front Floating Dashboard Card */}
+            {/* Front Floating Dashboard Card — bold & solid */}
             <div
-              className="animate-slow-float relative w-full max-w-md rounded-2xl border border-white/20 bg-white/10 p-6 shadow-2xl backdrop-blur-md text-white"
-              style={{
-                transformStyle: "preserve-3d",
-                transform: "perspective(1200px) rotateY(-10deg) rotateX(5deg)",
-              }}
+              className="animate-slow-float relative w-full max-w-md rounded-2xl border-2 border-[#1a5faa] bg-[#00347A] p-6 shadow-2xl text-white"
+              style={{ transformStyle: "preserve-3d", transform: "perspective(1200px) rotateY(-10deg) rotateX(5deg)" }}
             >
-              {/* Mock Ticket List Header */}
-              <div className="flex items-center justify-between border-b border-white/15 pb-4 mb-4">
+              {/* Card Header */}
+              <div className="flex items-center justify-between border-b-2 border-[#1a5faa] pb-4 mb-5">
                 <div className="flex items-center gap-2.5">
-                  <FileCheck className="h-5 w-5 text-amber-400" />
-                  <span className="font-bold text-xs tracking-wider uppercase text-white/90">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#FFB800]">
+                    <FileCheck className="h-4 w-4 text-[#00275C]" />
+                  </div>
+                  <span className="font-extrabold text-sm tracking-wider uppercase text-white">
                     TRAI Ticketing Core
                   </span>
                 </div>
-                <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-[10px] text-emerald-400 font-bold tracking-wider uppercase">
-                  System Live
+                <span className="rounded-full bg-emerald-500 px-3 py-1 text-[11px] text-white font-bold tracking-wider uppercase shadow">
+                  ● System Live
                 </span>
               </div>
 
-              {/* Mock Queue Stats */}
+              {/* Stats */}
               <div className="grid grid-cols-3 gap-3 mb-5 text-center">
-                <div className="rounded-xl bg-white/5 p-3 border border-white/5">
-                  <div className="text-[9px] font-bold text-white/50 uppercase tracking-wider">
-                    Tickets
-                  </div>
-                  <div className="text-xl font-extrabold text-white mt-0.5">1,482</div>
+                <div className="rounded-xl bg-[#001f47] p-3 border border-[#1a5faa]">
+                  <div className="text-[10px] font-bold text-[#93C5FD] uppercase tracking-wider mb-1">Tickets</div>
+                  <div className="text-2xl font-black text-white">1,482</div>
                 </div>
-                <div className="rounded-xl bg-white/5 p-3 border border-white/5">
-                  <div className="text-[9px] font-bold text-white/50 uppercase tracking-wider">
-                    Pending L2
-                  </div>
-                  <div className="text-xl font-extrabold text-amber-400 mt-0.5">12</div>
+                <div className="rounded-xl bg-[#001f47] p-3 border border-[#1a5faa]">
+                  <div className="text-[10px] font-bold text-[#93C5FD] uppercase tracking-wider mb-1">Pending L2</div>
+                  <div className="text-2xl font-black text-[#FFB800]">12</div>
                 </div>
-                <div className="rounded-xl bg-white/5 p-3 border border-white/5">
-                  <div className="text-[9px] font-bold text-white/50 uppercase tracking-wider">
-                    SLA Met
-                  </div>
-                  <div className="text-xl font-extrabold text-emerald-400 mt-0.5">98.4%</div>
+                <div className="rounded-xl bg-[#001f47] p-3 border border-[#1a5faa]">
+                  <div className="text-[10px] font-bold text-[#93C5FD] uppercase tracking-wider mb-1">SLA Met</div>
+                  <div className="text-2xl font-black text-emerald-400">98.4%</div>
                 </div>
               </div>
 
-              {/* Mock Ticket Rows */}
+              {/* Ticket Rows */}
               <div className="space-y-2.5">
-                <div className="flex items-center justify-between rounded-lg bg-white/5 p-3 text-xs border border-white/5">
-                  <div className="font-mono text-white/80">TRAI-2026-0412</div>
-                  <div className="rounded bg-rose-500/20 px-2 py-0.5 text-[9px] font-semibold text-rose-400 uppercase tracking-wider">
-                    High Priority
-                  </div>
+                <div className="flex items-center justify-between rounded-lg bg-[#001f47] px-4 py-3 border border-[#1a5faa]">
+                  <div className="font-mono font-bold text-sm text-white">TRAI-2026-0412</div>
+                  <div className="rounded-md bg-rose-600 px-2.5 py-1 text-[10px] font-bold text-white uppercase tracking-wider">High Priority</div>
                 </div>
-                <div className="flex items-center justify-between rounded-lg bg-white/5 p-3 text-xs border border-white/5">
-                  <div className="font-mono text-white/80">TRAI-2026-0413</div>
-                  <div className="rounded bg-amber-500/20 px-2 py-0.5 text-[9px] font-semibold text-amber-400 uppercase tracking-wider">
-                    In Progress
-                  </div>
+                <div className="flex items-center justify-between rounded-lg bg-[#001f47] px-4 py-3 border border-[#1a5faa]">
+                  <div className="font-mono font-bold text-sm text-white">TRAI-2026-0413</div>
+                  <div className="rounded-md bg-[#c98a2e] px-2.5 py-1 text-[10px] font-bold text-white uppercase tracking-wider">In Progress</div>
+                </div>
+                <div className="flex items-center justify-between rounded-lg bg-[#001f47] px-4 py-3 border border-[#1a5faa]">
+                  <div className="font-mono font-bold text-sm text-white">TRAI-2026-0411</div>
+                  <div className="rounded-md bg-emerald-600 px-2.5 py-1 text-[10px] font-bold text-white uppercase tracking-wider">Resolved</div>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Footer Text */}
-          <div className="relative space-y-4 z-10">
-            <h2 className="text-2xl font-bold leading-tight tracking-wide text-white">
-              Complaint & Workflow Portal
+          <div className="relative space-y-3 z-10">
+            <div className="inline-block rounded-md bg-[#FFB800] px-3 py-1 text-[11px] font-black text-[#00275C] uppercase tracking-widest">
+              Internal Portal
+            </div>
+            <h2 className="text-3xl font-black leading-tight tracking-wide text-white">
+              Complaint &amp; Workflow Portal
             </h2>
-            <p className="text-sm text-blue-200/80 max-w-md leading-relaxed">
+            <p className="text-sm text-[#93C5FD] font-medium max-w-md leading-relaxed">
               Internal system for issue resolutions, resource assignments, divisional escalations,
               and automated SLA tracking.
             </p>
-            <div className="text-[10px] text-blue-300/50 uppercase tracking-wider">
-              Secure administrative terminal · All requests logged & audited
+            <div className="flex items-center gap-2 text-[11px] text-[#93C5FD] font-bold uppercase tracking-wider pt-1">
+              <ShieldCheck className="h-3.5 w-3.5 text-[#FFB800]" />
+              Secure administrative terminal · All requests logged &amp; audited
             </div>
           </div>
         </div>
